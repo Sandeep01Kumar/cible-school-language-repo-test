@@ -1,0 +1,99 @@
+/**
+ * Courses — the full course catalog page for CIBLE School of Language
+ * (route `/courses`).
+ *
+ * Lazy-loaded by `src/App.jsx`
+ * (`const Courses = lazy(() => import('./pages/Courses.jsx'))`,
+ * `<Route path="courses" element={<Courses />} />`) and rendered INSIDE the
+ * shared `<Layout>`. The Layout owns the page chrome (Navbar, `<main>`
+ * landmark, Footer, floating conversion widgets, scroll-to-top), so this file
+ * renders ONLY the page's own content — never a second `<main>` or navigation.
+ *
+ * Purpose (AAP §0.1.1): surface ALL 10 CIBLE courses in one browsable catalog
+ * with category filtering (English / Science / Computer / Career), driving the
+ * visitor toward admission via the closing call-to-action.
+ *
+ * Composition (reuse-first, zero duplication — every element is a shared
+ * primitive/composite, never hand-rolled markup):
+ * - `<Seo>`            — per-page title/description/canonical + Open Graph /
+ *                        Twitter head tags. `title="Courses"` resolves to the
+ *                        document title "Courses | CIBLE School of Language".
+ * - `<StructuredData>` — emits BreadcrumbList JSON-LD from `crumbs` so the
+ *                        visible trail and the structured data always agree
+ *                        (search-engine friendly, AAP §0.6.3 SEO).
+ * - `<Container as="section">` — the single canonical width/gutter wrapper,
+ *                        rendered as a semantic `<section>` landmark.
+ * - `<Breadcrumbs>`    — the visible hierarchy trail (Home / Courses), sharing
+ *                        the exact `{ name, path }` shape passed to
+ *                        `<StructuredData>`.
+ * - `<SectionHeading as="h1">` — the page's ONE `<h1>`.
+ * - `<CourseGrid showFilter>` — the shared responsive grid; it owns the
+ *                        category-filter state internally (via `useState`), so
+ *                        this page stays hook-free and purely presentational —
+ *                        it passes the `courses` data only.
+ * - `<CTASection>`     — the reusable admission call-to-action that closes every
+ *                        page (Fill Admission Form / Book Free Counseling /
+ *                        WhatsApp / Call), keeping conversion actions reachable.
+ *
+ * Accessibility (WCAG AA): exactly one `<h1>` (the section heading). The grid's
+ * filter chips are keyboard-accessible `<button>`s with `aria-pressed` (owned by
+ * `CourseGrid`), and each course card title is an `<h3>` (an h1→h3 step within a
+ * repeated card grid is acceptable per the page spec); the CTA closes with an
+ * `<h2>`. Sections are semantic `<section>` elements — no page-level `<main>`.
+ *
+ * Styling: token-only Tailwind utilities on the 8px spacing scale
+ * (`py-12`/`md:py-16`, `pb-16`/`md:pb-20`, `mb-6`). No arbitrary values, no
+ * hardcoded colors, and static classNames (no `cn` needed on this presentational
+ * page).
+ */
+import Seo from '../components/seo/Seo.jsx'
+import StructuredData from '../components/seo/StructuredData.jsx'
+import Container from '../components/ui/Container.jsx'
+import SectionHeading from '../components/ui/SectionHeading.jsx'
+import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
+import CourseGrid from '../components/common/CourseGrid.jsx'
+import CTASection from '../components/common/CTASection.jsx'
+import { courses } from '../data/courses.js'
+
+// Breadcrumb trail for this page. Module-local (never exported) so the file's
+// only public export stays the `Courses` component. The identical array is
+// passed to both the visible <Breadcrumbs> and the <StructuredData>
+// BreadcrumbList so the trail and its JSON-LD never diverge.
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Courses', path: '/courses' },
+]
+
+function Courses() {
+  return (
+    <>
+      <Seo
+        title="Courses"
+        canonical="/courses"
+        description="Browse all CIBLE courses — Spoken English, English Communication, Personality Development, Public Speaking, Interview Preparation, PCM & PCB science coaching, Basic Computer, Digital Literacy and Career Guidance."
+      />
+      <StructuredData breadcrumbs={crumbs} />
+
+      {/* Page header */}
+      <Container as="section" className="py-12 md:py-16">
+        <Breadcrumbs items={crumbs} className="mb-6" />
+        <SectionHeading
+          as="h1"
+          align="left"
+          eyebrow="Our Programs"
+          title="Courses at CIBLE School of Language"
+          subtitle="From spoken English to science and computer courses — find the program that fits your goals."
+        />
+      </Container>
+
+      {/* Full catalog with category filter */}
+      <Container as="section" className="pb-16 md:pb-20">
+        <CourseGrid items={courses} showFilter />
+      </Container>
+
+      <CTASection />
+    </>
+  )
+}
+
+export default Courses
