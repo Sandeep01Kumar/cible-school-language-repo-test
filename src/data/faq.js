@@ -14,13 +14,16 @@
  *                          used purely for grouping in the FAQ page.
  *
  * NOTE — CLIENT-CONFIRMED CONTENT (AAP §0.7.2): The specific class timings,
- * batch schedules, fee amounts, payment options, and certificate details below
- * are REPRESENTATIVE and intentionally phrased in general terms. They must be
- * verified and finalized with CIBLE before launch. No exact fees or timings are
- * presented here as final; answers deliberately direct users to call, WhatsApp,
- * or visit for the most current information. Contact details (phone, email,
- * exact address) live in src/data/siteConfig.js and are surfaced by components —
- * only the city/location is referenced in this prose.
+ * batch options, fee amounts, payment options, trial/demo-class availability,
+ * and certificate details below are REPRESENTATIVE and intentionally phrased in
+ * general terms — they are NOT presented as final commitments. They must be
+ * verified and finalized with CIBLE before launch. Answers deliberately avoid
+ * asserting unconfirmed specifics as fact and instead direct users to call,
+ * WhatsApp, or visit for the most current information. The free counseling
+ * session is an intentional, standing admissions call-to-action (AAP §0.1.1).
+ * Contact details (phone, email, exact address) live in src/data/siteConfig.js
+ * and are surfaced by components — only the city/location is referenced in this
+ * prose.
  */
 
 export const faq = [
@@ -37,15 +40,15 @@ export const faq = [
     category: 'Courses',
   },
   {
-    question: 'Do you offer a free demo class or counseling session?',
+    question: 'Do you offer a free counseling session or a demo class?',
     answer:
-      'Yes! We offer a free counseling session and a demo class so you can experience our teaching before you decide. Call or WhatsApp us to book your free session today — there is no cost and no obligation.',
+      'Yes — we offer a free, no-obligation counseling session to help you choose the right course and plan your next steps. You are also welcome to ask about a trial or demo class for your chosen program. Call or WhatsApp us to book your free counseling session today.',
     category: 'Admissions',
   },
   {
     question: 'What are the class timings and batch options?',
     answer:
-      'We run flexible batches across the morning, afternoon, and evening to suit students, working professionals, and parents. Exact timings vary by course and season, so please call, WhatsApp, or visit us to confirm the current schedule and reserve your seat.',
+      'We aim to offer flexible batch options to suit students, working professionals, and parents. Exact batch timings vary by course and season, so please call, WhatsApp, or visit us to confirm the current schedule and reserve your seat.',
     category: 'General',
   },
   {
@@ -75,7 +78,7 @@ export const faq = [
   {
     question: 'Do you provide a certificate after completing a course?',
     answer:
-      'Yes, students receive a certificate of completion that recognizes the skills and progress you have achieved. Ask us for course-specific details during your free counseling session.',
+      'Many of our courses include a certificate of completion that recognizes the skills and progress you achieve. Ask us for course-specific certificate details during your free counseling session.',
     category: 'Courses',
   },
   {
