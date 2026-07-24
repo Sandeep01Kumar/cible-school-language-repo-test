@@ -27,7 +27,10 @@ import { cn } from '../../lib/cn.js'
  * - Separators are purely decorative and are hidden from assistive technology
  *   via `aria-hidden="true"`.
  * - Ancestor crumbs are React Router `<Link>`s (client-side navigation, no full
- *   page reload) and expose a clearly visible keyboard focus ring.
+ *   page reload) and expose a clearly visible keyboard focus ring. Each ancestor
+ *   link is an `inline-flex` box sized to a `min-h-11`/`min-w-11` (44×44px)
+ *   minimum so it satisfies the WCAG 2.5.5 / project 44×44 touch-target guideline
+ *   for comfortable tapping on mobile, with its label centred inside the hit area.
  *
  * Styling:
  * - Every class resolves to a Tailwind `@theme` token or a native utility
@@ -67,7 +70,7 @@ function Breadcrumbs({ items = [], className }) {
                 <>
                   <Link
                     to={item.path}
-                    className="rounded transition-colors hover:text-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded transition-colors hover:text-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
                   >
                     {item.name}
                   </Link>
