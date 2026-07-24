@@ -1,0 +1,5 @@
+# robots.txt for CIBLE School of Language
+User-agent: *
+Allow: /
+
+Sitemap: https://www.cibleschool.com/sitemap.xml

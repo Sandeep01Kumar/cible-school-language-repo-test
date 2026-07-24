@@ -1,0 +1,21 @@
+{
+  "name": "CIBLE School of Language",
+  "short_name": "CIBLE",
+  "description": "CIBLE School of Language — Spoken English, Science (PCM/PCB) coaching, and Computer Courses in Madhubani, Bihar. Learn English. Build Confidence. Shape Your Future.",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ]
+}
