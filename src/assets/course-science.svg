@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Science coaching for PCM and PCB">
+  <title>Science coaching for PCM and PCB</title>
+  <rect width="400" height="300" rx="24" fill="#f0fdf4"/>
+  <circle cx="60" cy="60" r="14" fill="#dcfce7"/>
+  <circle cx="348" cy="60" r="9" fill="#f97316"/>
+  <g transform="translate(150 150)">
+    <ellipse rx="72" ry="28" fill="none" stroke="#16a34a" stroke-width="6"/>
+    <ellipse rx="72" ry="28" fill="none" stroke="#16a34a" stroke-width="6" transform="rotate(60)"/>
+    <ellipse rx="72" ry="28" fill="none" stroke="#16a34a" stroke-width="6" transform="rotate(120)"/>
+    <circle r="16" fill="#2563eb"/>
+  </g>
+  <g transform="translate(292 96)">
+    <path d="M14 0 L14 34 L2 78 Q0 90 12 90 L52 90 Q64 90 62 78 L50 34 L50 0 Z" fill="#ffffff" stroke="#94a3b8" stroke-width="4"/>
+    <path d="M6 58 L58 58 L52 78 Q54 90 42 90 L22 90 Q10 90 12 78 Z" fill="#22c55e"/>
+    <rect x="8" y="-8" width="48" height="10" rx="4" fill="#334155"/>
+  </g>
+</svg>

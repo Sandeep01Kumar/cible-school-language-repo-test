@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160" role="img" aria-label="CIBLE faculty member portrait">
+  <title>CIBLE faculty member (representative portrait)</title>
+  <defs><clipPath id="fc2"><circle cx="80" cy="80" r="80"/></clipPath></defs>
+  <g clip-path="url(#fc2)">
+    <rect width="160" height="160" fill="#ffedd5"/>
+    <path d="M80 96 C42 96 14 122 10 164 H150 C146 122 118 96 80 96 Z" fill="#16a34a"/>
+    <path d="M70 88 H90 V104 C90 110 70 110 70 104 Z" fill="#f1c9a5" opacity="0.92"/>
+    <circle cx="80" cy="62" r="30" fill="#f1c9a5"/>
+    <path d="M50 64 C50 40 63 32 80 32 C97 32 110 40 110 64 C110 55 100 48 80 48 C60 48 50 55 50 64 Z" fill="#3f2a1a"/><circle cx="80" cy="29" r="10" fill="#3f2a1a"/>
+  </g>
+</svg>

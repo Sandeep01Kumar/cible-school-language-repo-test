@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Personality development and public speaking course">
+  <title>Personality development and public speaking course</title>
+  <rect width="400" height="300" rx="24" fill="#fff7ed"/>
+  <circle cx="56" cy="60" r="16" fill="#ffedd5"/>
+  <circle cx="352" cy="238" r="22" fill="#ffedd5"/>
+  <path d="M322 54 L329 72 L348 72 L333 84 L339 102 L322 90 L305 102 L311 84 L296 72 L315 72 Z" fill="#f97316"/>
+  <circle cx="188" cy="96" r="30" fill="#334155"/>
+  <path d="M144 156 C144 124 232 124 232 156 L232 210 L144 210 Z" fill="#2563eb"/>
+  <rect x="132" y="200" width="136" height="72" rx="8" fill="#1d4ed8"/>
+  <rect x="225" y="120" width="6" height="70" fill="#64748b"/>
+  <circle cx="228" cy="116" r="13" fill="#16a34a"/>
+  <rect x="112" y="264" width="176" height="14" rx="6" fill="#93c5fd"/>
+</svg>
