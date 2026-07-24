@@ -1,0 +1,129 @@
+/**
+ * Admission — CIBLE School of Language (route `/admission`).
+ *
+ * The site's PRIMARY conversion page (AAP §0.6.3): it walks a prospective
+ * student/parent through the admission journey and puts the inquiry form front
+ * and centre. It is lazy-loaded by `src/App.jsx`
+ * (`const Admission = lazy(() => import('./pages/Admission.jsx'))`) and rendered
+ * at `<Route path="admission" element={<Admission />} />` inside the shared
+ * `<Layout>`, so this module renders ONLY the page's own content — the
+ * persistent Navbar, Footer and floating conversion widgets belong to Layout.
+ *
+ * Composition (single <h1>, logical heading outline, admission-focused close):
+ *   1. <Seo>            — per-page title/description/canonical + OG/Twitter tags.
+ *   2. <StructuredData> — BreadcrumbList JSON-LD built from `crumbs`.
+ *   3. Page header      — Breadcrumbs + the page <h1> (SectionHeading as="h1").
+ *   4. Process band     — a tinted `bg-surface` section whose <Timeline> lists
+ *                         the four admission steps (icons passed as component
+ *                         references, never JSX).
+ *   5. Admission form   — the self-contained <AdmissionForm/> in a narrow column.
+ *   6. <CTASection/>    — the reusable admission call-to-action that closes
+ *                         every page.
+ *
+ * Reuse-first (zero duplication): every visual element is delegated to a
+ * canonical primitive (`Container`, `SectionHeading`, `Breadcrumbs`) or
+ * composite (`Timeline`, `AdmissionForm`, `CTASection`); this page owns no
+ * bespoke markup styling beyond token-only layout classes on the project's 8px
+ * spacing scale. It declares no hooks and holds no state — all interactivity
+ * (form validation, reveal animation) lives inside the composed components.
+ */
+import { FaWpforms, FaComments, FaClipboardCheck, FaGraduationCap } from 'react-icons/fa'
+import Seo from '../components/seo/Seo.jsx'
+import StructuredData from '../components/seo/StructuredData.jsx'
+import Container from '../components/ui/Container.jsx'
+import SectionHeading from '../components/ui/SectionHeading.jsx'
+import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
+import Timeline from '../components/common/Timeline.jsx'
+import CTASection from '../components/common/CTASection.jsx'
+import AdmissionForm from '../components/forms/AdmissionForm.jsx'
+
+// Breadcrumb trail — shared verbatim with the BreadcrumbList JSON-LD emitted by
+// <StructuredData> so the visible trail and the structured data stay in
+// agreement (same `{ name, path }` shape consumed by breadcrumbSchema). Module-
+// local (NOT exported): this module exposes only its default component.
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Admission', path: '/admission' },
+]
+
+// Representative admission process steps — confirm exact process with the institute (AAP 0.7.2).
+// Each `icon` is a react-icons COMPONENT REFERENCE (never JSX); <Timeline>
+// renders it inside the step marker and keys each entry by `title`. Module-local
+// (NOT exported).
+const admissionSteps = [
+  {
+    title: 'Submit Enquiry',
+    description: 'Fill the admission form below or reach us on WhatsApp or call to register your interest.',
+    icon: FaWpforms,
+  },
+  {
+    title: 'Free Counseling',
+    description: 'Our counselors help you choose the right course based on your goals and current level.',
+    icon: FaComments,
+  },
+  {
+    title: 'Confirm Enrolment',
+    description: 'Complete a simple registration and choose a batch timing that suits you.',
+    icon: FaClipboardCheck,
+  },
+  {
+    title: 'Start Learning',
+    description: 'Begin your classes at CIBLE and start building confidence from day one.',
+    icon: FaGraduationCap,
+  },
+]
+
+function Admission() {
+  return (
+    <>
+      <Seo
+        title="Admission"
+        canonical="/admission"
+        description="Apply to CIBLE School of Language. Complete the admission form for spoken English, science coaching or computer courses — free counseling and flexible batches in Madhubani, Bihar."
+      />
+      <StructuredData breadcrumbs={crumbs} />
+
+      {/* Page header */}
+      <Container as="section" className="py-12 md:py-16">
+        <Breadcrumbs items={crumbs} className="mb-6" />
+        <SectionHeading
+          as="h1"
+          align="left"
+          eyebrow="Admissions Open"
+          title="Admission"
+          subtitle="Take the first step toward confident English, better results and a brighter future."
+        />
+      </Container>
+
+      {/* Process (tinted band) */}
+      <section className="bg-surface py-16 md:py-20">
+        <Container>
+          <SectionHeading
+            eyebrow="How It Works"
+            title="Admission Process"
+            subtitle="Four simple steps from enquiry to your first class."
+          />
+          <div className="mt-10">
+            <Timeline items={admissionSteps} />
+          </div>
+        </Container>
+      </section>
+
+      {/* Admission form */}
+      <Container as="section" className="py-16 md:py-20">
+        <SectionHeading
+          eyebrow="Apply Now"
+          title="Admission Form"
+          subtitle="Fill in your details and our team will get in touch shortly."
+        />
+        <div className="mx-auto mt-10 max-w-2xl">
+          <AdmissionForm />
+        </div>
+      </Container>
+
+      <CTASection />
+    </>
+  )
+}
+
+export default Admission
