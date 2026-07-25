@@ -168,6 +168,62 @@
     outline-offset: 2px;
   }
 
+  /* ===== Fixed conversion-widget geometry (shared design variables) =======
+     Single source of truth for the mobile sticky-CTA bar height and the device
+     safe-area inset, so the persistent shell (Layout), the StickyBottomCTA bar
+     and any future fixed widget stay in lock-step instead of each hard-coding
+     magic offsets. Consumed by `.shell-bottom-clearance` and `.cta-safe-bottom`.
+       • --cta-sticky-height  : the mobile StickyBottomCTA bar's base height
+         (44px h-11 buttons + 8px top pad + ~8px bottom pad + 1px top border ≈
+         61px); rounded up to 4rem/64px for a comfortable clearance gap.
+       • --safe-area-inset-bottom : the home-indicator/notch inset. Resolves to
+         0px on hardware without a bottom inset (and until index.html opts in
+         with `viewport-fit=cover` during final document wiring), so every
+         consumer degrades gracefully. */
+  :root {
+    --cta-sticky-height: 4rem;
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Route-change / skip-link focus target. The `<main id="main">` landmark
+     receives programmatic focus on client-side navigation and when the skip
+     link is activated (see src/components/layout/Layout.jsx). Render a clear,
+     brand-primary keyboard-focus indicator (WCAG 2.4.7 Focus Visible) so those
+     users perceive that focus moved into the new page context. The negative
+     offset insets the ring just inside the full-width content region so it never
+     extends past the viewport edge or reads as a stray page-wide box, and it
+     appears for keyboard/programmatic focus only (`:focus-visible`), never for a
+     pointer click. */
+  #main:focus-visible {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: -2px;
+  }
+
+  /* Persistent-shell bottom clearance. Reserves space at the very bottom of the
+     scroll flow on mobile so the fixed StickyBottomCTA bar and the device
+     safe-area inset overlay empty padding rather than covering the footer's last
+     content/actions (robust for notches, home indicators and taller localized
+     bars). Applied to the Layout root; with border-box sizing the reserved space
+     coexists with `min-h-screen` without adding a scrollbar on short pages. The
+     sticky bar is `lg:hidden`, so the bar clearance is dropped at `lg`. */
+  .shell-bottom-clearance {
+    padding-bottom: calc(var(--cta-sticky-height) + var(--safe-area-inset-bottom));
+  }
+
+  @media (min-width: 64rem) {
+    .shell-bottom-clearance {
+      padding-bottom: 0;
+    }
+  }
+
+  /* Safe-area bottom padding for the mobile sticky CTA bar itself, so its
+     actions clear the home indicator on notched devices. The 0.5rem base matches
+     the bar's `p-2` bottom padding, so rendering is unchanged where the inset is
+     0; the shared inset variable is added on top where present. */
+  .cta-safe-bottom {
+    padding-bottom: calc(0.5rem + var(--safe-area-inset-bottom));
+  }
+
   /* Respect user motion preferences: disable smooth scroll and neutralize
      animations/transitions for users who request reduced motion. */
   @media (prefers-reduced-motion: reduce) {

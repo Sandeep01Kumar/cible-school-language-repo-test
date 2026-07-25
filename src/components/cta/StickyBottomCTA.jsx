@@ -57,9 +57,14 @@ import Button from '../ui/Button.jsx'
  * Styling is entirely token-driven (Tailwind v4 @theme tokens defined in
  * src/index.css): every color, spacing, border and shadow resolves to a design
  * token or utility on the 8px scale — no hardcoded or arbitrary bracket values.
- * (A safe-area inset using an arbitrary env() padding value is intentionally
- * NOT used, since arbitrary bracket values are disallowed; the token-based
- * `p-2` padding suffices.)
+ * The bar's bottom padding is applied through the shared `.cta-safe-bottom`
+ * design-system class (src/index.css) rather than a Tailwind `pb-*` utility: it
+ * keeps the 8px (`p-2`-equivalent, 0.5rem) base padding AND adds the device
+ * `env(safe-area-inset-bottom)` inset on top, so the actions clear the home
+ * indicator on notched devices. The inset resolves to 0 where no safe area
+ * exists, leaving rendering unchanged there. That offset is sourced from the
+ * SAME shared design variable the persistent shell uses for its bottom
+ * clearance, keeping the bar and the shell in lock-step (see `Layout`).
  *
  * The component takes no props and renders identically everywhere it is mounted.
  *
@@ -79,7 +84,7 @@ function StickyBottomCTA() {
     <div
       className={cn(
         'fixed inset-x-0 bottom-0 z-40 lg:hidden',
-        'grid grid-cols-3 gap-2 border-t border-border bg-white p-2 shadow-lg',
+        'grid grid-cols-3 gap-2 border-t border-border bg-white px-2 pt-2 shadow-lg cta-safe-bottom',
       )}
     >
       {/* Call — blue primary, matching FloatingCall. Opens the device dialer in place. */}
