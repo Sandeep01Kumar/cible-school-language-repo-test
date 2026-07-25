@@ -12,11 +12,22 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
  * Default IntersectionObserver options for scroll-reveal:
  * - triggerOnce: the reveal fires a single time and then stops observing, so
  *   content never re-hides when it scrolls back out of view.
- * - threshold: reveal once roughly 15% of the element has entered the viewport.
- * Callers may override any field by passing their own options to
- * useScrollReveal (caller options are merged OVER these defaults).
+ * - threshold: 0 reveals as soon as ANY part of the observed element enters the
+ *   viewport. This is deliberate and important for robustness. The ref returned
+ *   by this hook is usually attached to a whole section/grid CONTAINER, and a
+ *   positive threshold t requires at least a fraction t of that container to be
+ *   on-screen at once. For any container taller than viewportHeight / t the
+ *   maximum achievable intersection ratio is itself below t, so the trigger is
+ *   mathematically unsatisfiable and the content stays hidden FOREVER (e.g. a
+ *   tall single-column course grid on a narrow mobile viewport — the grid can
+ *   never occupy 15% of the screen, so a threshold of 0.15 would never fire and
+ *   the cards would remain opacity:0). threshold: 0 is satisfiable at every
+ *   container height, so paired with triggerOnce it reveals content exactly
+ *   once as it scrolls into view and never traps it in the hidden state.
+ * Callers may override any field (including threshold) by passing their own
+ * options to useScrollReveal (caller options are merged OVER these defaults).
  */
-const DEFAULT_OPTIONS = { triggerOnce: true, threshold: 0.15 }
+const DEFAULT_OPTIONS = { triggerOnce: true, threshold: 0 }
 
 /**
  * Synchronously read whether the user prefers reduced motion.
@@ -64,7 +75,7 @@ export function prefersReducedMotion() {
  * top level, in a stable order, to satisfy the Rules of Hooks.
  *
  * @param {Object} [options] Optional useInView options merged OVER the defaults
- *   ({ triggerOnce: true, threshold: 0.15 }). Common overrides: threshold,
+ *   ({ triggerOnce: true, threshold: 0 }). Common overrides: threshold,
  *   rootMargin, root, triggerOnce, skip.
  * @returns {{ ref: (node?: Element | null) => void, inView: boolean }} ref is a
  *   callback ref to attach to the observed element (for example a motion.*

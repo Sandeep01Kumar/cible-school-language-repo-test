@@ -93,7 +93,7 @@ function About() {
           as="h1"
           align="left"
           eyebrow="About CIBLE"
-          title="Learn English. Build Confidence. Shape Your Future."
+          title="About CIBLE School of Language"
           subtitle="CIBLE School of Language helps students in Madhubani and beyond become fluent, confident communicators ready for academics and careers."
         />
       </Container>
