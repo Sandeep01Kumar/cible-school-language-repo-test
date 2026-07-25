@@ -38,16 +38,20 @@ import { siteConfig } from '../../data/siteConfig.js'
  *     subject and body.
  * The `window.open` / `window.location.href` call is made SYNCHRONOUSLY inside
  * the click/submit handler to preserve the user gesture (avoids popup
- * blocking); the success state is flipped shortly after so the confirmation
- * panel appears once the messaging app has had a chance to open. No network,
+ * blocking). For the WhatsApp channel the `window.open` return value is checked:
+ * on success the confirmation panel appears shortly after; if the browser
+ * blocked the tab (a null return) the form does NOT claim success and instead
+ * shows a recovery panel with a directly clickable pre-filled link. No network,
  * fetch, or XHR is performed.
  *
- * Four UX states (folder requirement):
+ * UX states (folder requirement — four states plus a recoverable block state):
  *   • empty      → pristine `idle` render (the default form).
  *   • loading    → `submitting` (buttons disabled + inline `Spinner` + `Sending…`).
  *   • error      → a form-level `role="alert"` message.
  *   • success    → a focused confirmation panel (`role="status"`), from which
  *                  the user can jump straight to WhatsApp/Call or reset the form.
+ *   • blocked    → the browser blocked the WhatsApp tab: a focused `role="alert"`
+ *                  recovery panel with a clickable, pre-filled link (Issue 7).
  *
  * Accessibility (WCAG AA): every field has a real <label> and, when invalid,
  * `aria-invalid` plus a `role="alert"` message (all provided by the primitives
@@ -93,15 +97,22 @@ function ContactForm({ className } = {}) {
     defaultValues: { name: '', email: '', phone: '', subject: '', message: '' },
   })
 
-  // 'idle' (empty) | 'submitting' (loading) | 'success' | 'error'
+  // 'idle' (empty) | 'submitting' (loading) | 'success' |
+  // 'blocked' (WhatsApp popup blocked — recoverable) | 'error'
   const [status, setStatus] = useState('idle')
-  const successRef = useRef(null)
+  // Stash the fully pre-filled WhatsApp deep link when the popup is blocked so
+  // the 'blocked' panel can offer it as a directly clickable recovery link.
+  const [fallbackUrl, setFallbackUrl] = useState('')
+  const panelRef = useRef(null)
   const isSubmitting = status === 'submitting'
 
-  // Move focus to the confirmation panel when the submission succeeds so
-  // keyboard and screen-reader users are taken straight to the outcome.
+  // Move focus to whichever result panel is shown (success OR the blocked /
+  // recovery panel) so keyboard and screen-reader users are taken straight to
+  // the outcome.
   useEffect(() => {
-    if (status === 'success' && successRef.current) successRef.current.focus()
+    if ((status === 'success' || status === 'blocked') && panelRef.current) {
+      panelRef.current.focus()
+    }
   }, [status])
 
   // Curried submit handler: `channel` selects the delivery method, and the
@@ -117,7 +128,20 @@ function ContactForm({ className } = {}) {
           subject,
         )}&body=${encodeURIComponent(text)}`
       } else {
-        window.open(`${siteConfig.whatsappHref}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer')
+        const waUrl = `${siteConfig.whatsappHref}?text=${encodeURIComponent(text)}`
+        // Open WITHOUT the 'noopener' feature so the return value reliably
+        // reports whether the browser blocked the popup (with 'noopener' the
+        // return is always null and a block is undetectable). Sever the opener
+        // reference manually to keep the same security posture.
+        const win = window.open(waUrl, '_blank')
+        if (!win) {
+          // Popup blocked — do NOT claim success. Offer a recoverable,
+          // user-clickable pre-filled link instead (Issue 7 / truthfulness).
+          setFallbackUrl(waUrl)
+          setStatus('blocked')
+          return
+        }
+        win.opener = null
       }
       window.setTimeout(() => {
         setStatus('success')
@@ -131,7 +155,7 @@ function ContactForm({ className } = {}) {
   if (status === 'success') {
     return (
       <div className={cn('flex flex-col items-start gap-4 rounded-2xl border border-border bg-accent-50 p-6', className)}>
-        <div ref={successRef} tabIndex={-1} role="status" className="focus-visible:outline-none">
+        <div ref={panelRef} tabIndex={-1} role="status" className="focus-visible:outline-none">
           <h3 className="text-xl font-bold text-accent-800">Thank you for reaching out!</h3>
           <p className="mt-2 text-muted">
             We’ve opened WhatsApp / your email with your message pre-filled — just press send and we’ll reply soon. If
@@ -147,6 +171,36 @@ function ContactForm({ className } = {}) {
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setStatus('idle')}>
             Send another message
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // --- BLOCKED state: the browser prevented the WhatsApp tab from opening. We
+  // never pretend the message was sent; we present a directly clickable,
+  // fully pre-filled recovery link plus a direct Call fallback. All hooks above
+  // have already run, so this early return is safe.
+  if (status === 'blocked') {
+    return (
+      <div className={cn('flex flex-col items-start gap-4 rounded-2xl border border-border bg-secondary-50 p-6', className)}>
+        <div ref={panelRef} tabIndex={-1} role="alert" className="focus-visible:outline-none">
+          <h3 className="text-xl font-bold text-secondary-800">Your browser blocked the WhatsApp tab</h3>
+          <p className="mt-2 text-muted">
+            We couldn&rsquo;t open WhatsApp automatically, so your message has NOT been sent yet. Tap the
+            button below to open your pre-filled message and press send — or contact us directly.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button href={fallbackUrl} variant="accent" size="sm">
+            <FaWhatsapp aria-hidden="true" />
+            Open WhatsApp
+          </Button>
+          <Button href={siteConfig.phoneHref} variant="secondary" size="sm">
+            Call Now
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => setStatus('idle')}>
+            Back to the form
           </Button>
         </div>
       </div>

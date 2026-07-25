@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { MotionConfig } from 'framer-motion'
 import Layout from './components/layout/Layout.jsx'
 import Spinner from './components/ui/Spinner.jsx'
 
@@ -42,6 +43,10 @@ const NotFound = lazy(() => import('./pages/NotFound.jsx'))
  * an in-shell Suspense boundary around its `<Outlet/>`, so the nav + footer
  * stay visible during subsequent navigations).
  *
+ * Motion policy: a `<MotionConfig reducedMotion="user">` wraps the whole route
+ * tree so every framer-motion element site-wide honors the user's
+ * prefers-reduced-motion setting (AAP §0.6.3 / WCAG 2.3.3).
+ *
  * Shared shell: a pathless parent `<Route element={<Layout/>}>` wraps every
  * page, so the persistent Navbar, Footer, floating Call/WhatsApp widgets and
  * mobile sticky CTA are mounted once and never unmount between navigations —
@@ -63,28 +68,40 @@ const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 function App() {
   return (
     <Suspense fallback={<Spinner />}>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="about" element={<About />} />
-          <Route path="courses" element={<Courses />} />
-          <Route path="spoken-english" element={<SpokenEnglish />} />
-          <Route path="science-coaching" element={<ScienceCoaching />} />
-          <Route path="computer-courses" element={<ComputerCourses />} />
-          <Route path="faculty" element={<Faculty />} />
-          <Route path="gallery" element={<Gallery />} />
-          <Route path="success-stories" element={<SuccessStories />} />
-          <Route path="blog" element={<Blog />} />
-          <Route path="events" element={<Events />} />
-          <Route path="admission" element={<Admission />} />
-          <Route path="career" element={<Career />} />
-          <Route path="faq" element={<Faq />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="terms" element={<Terms />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
+      {/*
+       * Global reduced-motion contract (AAP §0.6.3 "respecting
+       * prefers-reduced-motion" / WCAG 2.3.3). `reducedMotion="user"` makes
+       * EVERY framer-motion element in the tree honor the OS/browser
+       * "reduce motion" setting: transform and layout animations are disabled
+       * for those users. Individual components additionally gate their enter
+       * animation with `initial={reduce ? false : 'hidden'}` so reveals mount
+       * directly at their final state — this MotionConfig is the site-wide
+       * safety net that also covers any motion element without a local gate.
+       */}
+      <MotionConfig reducedMotion="user">
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="about" element={<About />} />
+            <Route path="courses" element={<Courses />} />
+            <Route path="spoken-english" element={<SpokenEnglish />} />
+            <Route path="science-coaching" element={<ScienceCoaching />} />
+            <Route path="computer-courses" element={<ComputerCourses />} />
+            <Route path="faculty" element={<Faculty />} />
+            <Route path="gallery" element={<Gallery />} />
+            <Route path="success-stories" element={<SuccessStories />} />
+            <Route path="blog" element={<Blog />} />
+            <Route path="events" element={<Events />} />
+            <Route path="admission" element={<Admission />} />
+            <Route path="career" element={<Career />} />
+            <Route path="faq" element={<Faq />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="terms" element={<Terms />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </MotionConfig>
     </Suspense>
   )
 }

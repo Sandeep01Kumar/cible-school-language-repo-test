@@ -3,7 +3,7 @@ import { FaWhatsapp, FaPhoneAlt } from 'react-icons/fa'
 import Container from '../ui/Container.jsx'
 import Button from '../ui/Button.jsx'
 import { cn } from '../../lib/cn.js'
-import { useScrollReveal, fadeUp } from '../../hooks/useScrollReveal.js'
+import { useScrollReveal, prefersReducedMotion, fadeUp } from '../../hooks/useScrollReveal.js'
 import siteConfig from '../../data/siteConfig.js'
 
 /**
@@ -50,9 +50,11 @@ import siteConfig from '../../data/siteConfig.js'
  *   text-muted-foreground → text-muted           (--color-muted, ~7.5:1 on white)
  *
  * Animation — a single subtle fade-up reveal via framer-motion driven by
- * {@link useScrollReveal}, which fully respects `prefers-reduced-motion` (it
- * reveals content immediately, un-animated, for users who request reduced
- * motion). All hooks are called unconditionally at the top level.
+ * {@link useScrollReveal}, which fully respects `prefers-reduced-motion`: the
+ * panel is gated with `initial={reduce ? false : 'hidden'}` (via
+ * {@link prefersReducedMotion}) so it mounts directly at its final state with
+ * NO enter animation for users who request reduced motion (WCAG 2.3.3). All
+ * hooks are called unconditionally at the top level.
  *
  * Accessibility (WCAG AA) — one <h2> titles the section; the actions sit in a
  * flex row of real <Link>/<a> controls (keyboard-operable, focus-ring exposed
@@ -76,6 +78,10 @@ export default function CTASection({
   ...props
 }) {
   const { ref, inView } = useScrollReveal()
+  // Synchronous, SSR-safe read of prefers-reduced-motion (plain helper, not a
+  // hook). When true the panel mounts with `initial={false}` and renders at its
+  // final state with no fade-up reveal (WCAG 2.3.3).
+  const reduce = prefersReducedMotion()
 
   return (
     <section className={cn('py-16 md:py-24', className)} {...props}>
@@ -83,7 +89,7 @@ export default function CTASection({
         <motion.div
           ref={ref}
           variants={fadeUp}
-          initial="hidden"
+          initial={reduce ? false : 'hidden'}
           animate={inView ? 'visible' : 'hidden'}
           className="rounded-3xl bg-gradient-to-br from-primary-600/5 via-surface to-secondary-500/5 px-6 py-12 text-center ring-1 ring-border md:px-12 md:py-16"
         >

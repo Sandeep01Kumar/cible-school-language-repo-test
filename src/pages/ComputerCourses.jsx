@@ -129,7 +129,11 @@ function ComputerCourses() {
       <Container as="section" className="py-16 md:py-20">
         <SectionHeading eyebrow="Programs" title="Computer Courses" subtitle="Start where you are." />
         <div className="mt-10">
-          <CourseGrid items={computerCourses} />
+          <CourseGrid
+            items={computerCourses}
+            ctaTo={(c) => `/admission?course=${encodeURIComponent(c.title)}`}
+            ctaLabel="Apply now"
+          />
         </div>
       </Container>
 

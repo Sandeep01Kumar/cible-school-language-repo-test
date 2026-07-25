@@ -125,7 +125,11 @@ function SpokenEnglish() {
       <Container as="section" className="py-16 md:py-20">
         <SectionHeading eyebrow="Programs" title="English Courses" subtitle="Choose the program that matches your goals." />
         <div className="mt-10">
-          <CourseGrid items={englishCourses} />
+          <CourseGrid
+            items={englishCourses}
+            ctaTo={(c) => `/admission?course=${encodeURIComponent(c.title)}`}
+            ctaLabel="Apply now"
+          />
         </div>
       </Container>
 

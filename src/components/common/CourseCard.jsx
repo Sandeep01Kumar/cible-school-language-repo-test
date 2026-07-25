@@ -35,18 +35,23 @@ import courseCareer from '../../assets/course-career.svg'
  * falls back to the category illustration (see {@link IMAGE_BY_CATEGORY}), and finally
  * defaults to the English illustration so a card never renders without media.
  *
- * "Learn more" destination:
+ * CTA destination & label:
  * The CTA links to the most relevant existing route for the course's category (see
- * {@link ROUTE_BY_CATEGORY}), with a `/courses` fallback. Callers may override the
- * destination with the `to` prop. The link is produced by <Button to=...>, which
- * renders a react-router <Link> — so this file never imports Link directly.
+ * {@link ROUTE_BY_CATEGORY}), with a `/courses` fallback. The 'Career' category has
+ * no dedicated page, so it routes to `/admission` (never back to the /courses
+ * catalog the card sits in — that self-referential dead end was QA Issue 8).
+ * Callers may override the destination with the `to` prop (the category landing
+ * pages pass `to="/admission?course=<title>"` so their cards drive admission
+ * instead of self-linking) and the visible/aria label via `ctaLabel`. The link is
+ * produced by <Button to=...>, which renders a react-router <Link> — so this file
+ * never imports Link directly.
  *
  * Accessibility (WCAG AA):
  * - The illustration is decorative (the title conveys the meaning), so it uses an
  *   empty `alt` + `aria-hidden`; every icon is likewise decorative (`aria-hidden`).
  * - The card title is an <h3> (cards sit beneath a section <h2>).
- * - "Learn more" is not unique on a page of many cards, so the CTA carries a
- *   descriptive `aria-label` naming the course.
+ * - The CTA label repeats across a page of many cards, so it carries a
+ *   descriptive `aria-label` combining the label and the course title.
  * - The default root element is a semantic <article> (self-contained content);
  *   callers can override via the `as` prop forwarded through `...props`
  *   (e.g. `as="li"` inside a list).
@@ -58,7 +63,9 @@ import courseCareer from '../../assets/course-career.svg'
  *   array of short strings, and `icon` is a react-icons component REFERENCE (rendered,
  *   never called). When `course` is falsy the component renders `null`.
  * @param {string} [props.to] Optional explicit destination that overrides the
- *   category-derived route for the "Learn more" CTA.
+ *   category-derived route for the CTA.
+ * @param {string} [props.ctaLabel='Learn more'] Visible CTA text (also used to
+ *   build the descriptive `aria-label`). Category pages pass e.g. "Apply now".
  * @param {string} [props.className] Extra classes merged LAST onto the <Card> surface.
  * @param {object} [props] Any other props (`as`, `id`, `data-*`, …) are forwarded to
  *   the underlying <Card> root.
@@ -89,15 +96,25 @@ const IMAGE_BY_CATEGORY = {
   Career: courseCareer,
 }
 
-// category → existing in-app route for the "Learn more" CTA (with a /courses fallback).
+// category → existing in-app route for the CTA (with a /courses fallback). The
+// three subject tracks point at their dedicated landing pages; 'Career' has no
+// dedicated page in the frozen 17-route table, so — rather than link back to the
+// same /courses catalog the card already sits in (a self-referential dead end,
+// QA Issue 8) — it drives straight to the conversion-focused /admission page.
 const ROUTE_BY_CATEGORY = {
   English: '/spoken-english',
   Science: '/science-coaching',
   Computer: '/computer-courses',
-  Career: '/courses',
+  Career: '/admission',
 }
 
-export default function CourseCard({ course, to: toProp, className, ...props }) {
+export default function CourseCard({
+  course,
+  to: toProp,
+  ctaLabel = 'Learn more',
+  className,
+  ...props
+}) {
   // Guard: nothing to render without a course record.
   if (!course) return null
 
@@ -183,9 +200,9 @@ export default function CourseCard({ course, to: toProp, className, ...props }) 
             to={to}
             variant="primary"
             size="sm"
-            aria-label={`Learn more about ${course.title}`}
+            aria-label={`${ctaLabel} — ${course.title}`}
           >
-            Learn more
+            {ctaLabel}
           </Button>
         </div>
       </div>

@@ -53,17 +53,22 @@ const crumbs = [
   { name: 'Gallery', path: '/gallery' },
 ]
 
-// Representative gallery imagery — replace with genuine institute photographs
-// before launch (AAP §0.7.2). The shape MUST match GalleryComponent's `images`
-// prop ({ src, alt, caption }); every entry provides a meaningful `alt` for
-// screen-reader users (WCAG AA).
+// Representative gallery imagery. The current assets are BRAND SVG ILLUSTRATIONS
+// (not photographs), so the `alt` text describes each as an "illustration
+// representing …" rather than asserting a real photograph — this keeps the page
+// truthful (the site must not present illustrations as genuine institute
+// photos). Authentic institute photographs are client-supplied and swapped in
+// before launch (AAP §0.7.2); when they are, revert the `alt` copy to describe
+// the real scene. The shape MUST match GalleryComponent's `images` prop
+// ({ src, alt, caption }); every entry provides a meaningful `alt` for
+// screen-reader users (WCAG AA), and the caption is a concise subject label.
 const galleryImages = [
-  { src: heroImg, alt: 'CIBLE School of Language campus', caption: 'Our Campus' },
-  { src: courseEnglish, alt: 'Spoken English class in session', caption: 'Spoken English' },
-  { src: coursePersonality, alt: 'Personality development workshop', caption: 'Personality Development' },
-  { src: courseScience, alt: 'Science coaching class', caption: 'Science Coaching' },
-  { src: courseComputer, alt: 'Computer lab training', caption: 'Computer Lab' },
-  { src: courseCareer, alt: 'Career guidance session', caption: 'Career Guidance' },
+  { src: heroImg, alt: 'Illustration representing the CIBLE School of Language campus', caption: 'Our Campus' },
+  { src: courseEnglish, alt: 'Illustration representing a spoken English class', caption: 'Spoken English' },
+  { src: coursePersonality, alt: 'Illustration representing a personality development workshop', caption: 'Personality Development' },
+  { src: courseScience, alt: 'Illustration representing a science coaching class', caption: 'Science Coaching' },
+  { src: courseComputer, alt: 'Illustration representing computer lab training', caption: 'Computer Lab' },
+  { src: courseCareer, alt: 'Illustration representing a career guidance session', caption: 'Career Guidance' },
 ]
 
 function Gallery() {
@@ -72,7 +77,7 @@ function Gallery() {
       <Seo
         title="Gallery"
         canonical="/gallery"
-        description="Explore photos of CIBLE School of Language — our campus, classrooms, spoken English sessions, science coaching, computer lab and student activities in Madhubani, Bihar."
+        description="An illustrated gallery of CIBLE School of Language — depicting our campus, classrooms, spoken English sessions, science coaching, computer lab and student activities in Madhubani, Bihar."
       />
       <StructuredData breadcrumbs={crumbs} />
 
@@ -83,7 +88,7 @@ function Gallery() {
           align="left"
           eyebrow="Life at CIBLE"
           title="Gallery"
-          subtitle="A glimpse into our classrooms, activities and the CIBLE learning experience."
+          subtitle="An illustrated glimpse into our classrooms, activities and the CIBLE learning experience."
         />
       </Container>
 

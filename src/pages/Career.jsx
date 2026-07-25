@@ -21,10 +21,13 @@ import siteConfig from '../data/siteConfig.js'
  * floating conversion widgets and scroll-to-top are owned by the layout shell.
  *
  * Conversion-first, backend-free: the institute has no application API, so every
- * opening exposes two real, tappable deep-links read from the single source of
- * truth {@link siteConfig} — "Apply via WhatsApp" (`siteConfig.whatsappHref`,
- * an https://wa.me/… link that the shared <Button> opens in a new tab) and
- * "Email Resume" (`siteConfig.emailHref`, a `mailto:` link opened in place).
+ * opening exposes two real, tappable deep-links whose endpoints come from the
+ * single source of truth {@link siteConfig} — "Apply via WhatsApp"
+ * (`siteConfig.whatsappHref`, an https://wa.me/… link the shared <Button> opens
+ * in a new tab) and "Email Resume" (`siteConfig.emailHref`, a `mailto:` opened
+ * in place). Each link is PRE-FILLED per role: the WhatsApp `?text=` and the
+ * mailto `subject`/`body` name the exact position (QA Issue 13), so the
+ * applicant never hands off with a blank, ambiguous message.
  *
  * Reuse-first (zero duplication): the page is assembled entirely from the
  * canonical primitives — <Container>, <SectionHeading>, <Breadcrumbs>, <Card>,
@@ -150,24 +153,43 @@ function Career() {
           subtitle="Apply in a click — send us a message on WhatsApp or email your resume."
         />
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {openings.map((role) => (
-            <Card key={role.title} className="flex flex-col p-6">
-              <div className="mb-3 flex items-start gap-3">
-                <h3 className="min-w-0 text-lg font-semibold text-foreground">{role.title}</h3>
-                <Badge variant="secondary" className="shrink-0">
-                  {role.type}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted">{role.location}</p>
-              <p className="mt-3 flex-1 text-muted leading-relaxed">{role.description}</p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button href={siteConfig.whatsappHref}>Apply via WhatsApp</Button>
-                <Button variant="outline" href={siteConfig.emailHref}>
-                  Email Resume
-                </Button>
-              </div>
-            </Card>
-          ))}
+          {openings.map((role) => {
+            // Per-role, pre-filled deep links (QA Issue 13): each opening carries
+            // its OWN WhatsApp `?text=` and `mailto:` subject/body referencing the
+            // exact role, so an applicant lands in their messaging/mail app with
+            // the position already stated — no blank, ambiguous handoff. Endpoints
+            // still come from the single source of truth (siteConfig); only the
+            // pre-fill query is composed here.
+            const waText = `Hello CIBLE, I would like to apply for the ${role.title} position (${role.type}, ${role.location}). Please find my details below:`
+            const applyWhatsApp = `${siteConfig.whatsappHref}?text=${encodeURIComponent(waText)}`
+            const emailSubject = `Job Application — ${role.title}`
+            const emailBody = `Hello CIBLE Team,\n\nI would like to apply for the ${role.title} position (${role.type}, ${role.location}).\n\nName:\nPhone:\nExperience:\n\n(My resume is attached.)\n\nThank you.`
+            const emailResume = `${siteConfig.emailHref}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
+            return (
+              <Card key={role.title} className="flex flex-col p-6">
+                <div className="mb-3 flex items-start gap-3">
+                  <h3 className="min-w-0 text-lg font-semibold text-foreground">{role.title}</h3>
+                  <Badge variant="secondary" className="shrink-0">
+                    {role.type}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted">{role.location}</p>
+                <p className="mt-3 flex-1 text-muted leading-relaxed">{role.description}</p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Button href={applyWhatsApp} aria-label={`Apply for the ${role.title} role via WhatsApp`}>
+                    Apply via WhatsApp
+                  </Button>
+                  <Button
+                    variant="outline"
+                    href={emailResume}
+                    aria-label={`Email your resume for the ${role.title} role`}
+                  >
+                    Email Resume
+                  </Button>
+                </div>
+              </Card>
+            )
+          })}
         </div>
       </Container>
 

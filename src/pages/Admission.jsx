@@ -24,9 +24,12 @@
  * canonical primitive (`Container`, `SectionHeading`, `Breadcrumbs`) or
  * composite (`Timeline`, `AdmissionForm`, `CTASection`); this page owns no
  * bespoke markup styling beyond token-only layout classes on the project's 8px
- * spacing scale. It declares no hooks and holds no state — all interactivity
+ * spacing scale. Its only hook is `useSearchParams`, used to preselect the
+ * admission form's "Course of Interest" from an optional `?course=<title>`
+ * query (set by the category pages' course cards); all other interactivity
  * (form validation, reveal animation) lives inside the composed components.
  */
+import { useSearchParams } from 'react-router-dom'
 import { FaWpforms, FaComments, FaClipboardCheck, FaGraduationCap } from 'react-icons/fa'
 import Seo from '../components/seo/Seo.jsx'
 import StructuredData from '../components/seo/StructuredData.jsx'
@@ -36,6 +39,7 @@ import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import Timeline from '../components/common/Timeline.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import AdmissionForm from '../components/forms/AdmissionForm.jsx'
+import { courses } from '../data/courses.js'
 
 // Breadcrumb trail — shared verbatim with the BreadcrumbList JSON-LD emitted by
 // <StructuredData> so the visible trail and the structured data stay in
@@ -74,6 +78,16 @@ const admissionSteps = [
 ]
 
 function Admission() {
+  // Preselect the "Course of Interest" when a category page linked here with a
+  // `?course=<title>` query (QA Issue 8 — category cards now drive admission).
+  // The value is validated against the single source of truth so only a real
+  // course title reaches the form; anything else is ignored (undefined → the
+  // form's blank default), so a stale/hand-edited query can never break the
+  // <Select>.
+  const [searchParams] = useSearchParams()
+  const requestedCourse = searchParams.get('course')
+  const defaultCourse = courses.find((c) => c.title === requestedCourse)?.title
+
   return (
     <>
       <Seo
@@ -117,7 +131,7 @@ function Admission() {
           subtitle="Fill in your details and our team will get in touch shortly."
         />
         <div className="mx-auto mt-10 max-w-2xl">
-          <AdmissionForm />
+          <AdmissionForm defaultCourse={defaultCourse} />
         </div>
       </Container>
 

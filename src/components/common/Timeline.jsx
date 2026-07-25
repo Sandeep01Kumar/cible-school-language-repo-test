@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { cn } from '../../lib/cn.js'
-import { useScrollReveal, fadeUp, staggerContainer } from '../../hooks/useScrollReveal.js'
+import { useScrollReveal, prefersReducedMotion, fadeUp, staggerContainer } from '../../hooks/useScrollReveal.js'
 
 /**
  * Timeline — CIBLE School of Language.
@@ -27,9 +27,14 @@ import { useScrollReveal, fadeUp, staggerContainer } from '../../hooks/useScroll
  * - The parent `<motion.ol>` uses the shared `staggerContainer` variant; each
  *   child `<motion.li>` uses the shared `fadeUp` variant with NO own
  *   `initial`/`animate`, so framer-motion propagates the variant label from the
- *   parent and staggers the children (a smooth top-to-bottom cascade). All
- *   motion is neutralized globally under `prefers-reduced-motion` in
- *   `src/index.css`.
+ *   parent and staggers the children (a smooth top-to-bottom cascade).
+ * - Reduced-motion is honored at the JavaScript layer (framer-motion drives
+ *   inline transform/opacity tweens that the CSS `prefers-reduced-motion` reset
+ *   in src/index.css cannot neutralize): the `<motion.ol>` is gated with
+ *   `initial={reduce ? false : 'hidden'}` (via {@link prefersReducedMotion}) so
+ *   it mounts DIRECTLY at its final state with no enter animation, and the
+ *   site-wide `<MotionConfig reducedMotion="user">` in `src/App.jsx` is the
+ *   global safety net (WCAG 2.3.3).
  *
  * Styling (Tailwind v4 `@theme` brand tokens from src/index.css — zero hardcoded
  * values; only native layout/spacing utilities and the exempt `white` color are
@@ -69,16 +74,21 @@ export default function Timeline({ items = [], className, ...props }) {
   // Single, unconditional top-level hook (Rules of Hooks): drives the staggered
   // reveal and transparently respects prefers-reduced-motion.
   const { ref, inView } = useScrollReveal()
+  // Synchronous, SSR-safe read of prefers-reduced-motion (plain helper, not a
+  // hook — safe to call before the early return). When true the list mounts
+  // with `initial={false}`: every step renders at its final state with no
+  // fade-up/stagger reveal (WCAG 2.3.3).
+  const reduce = prefersReducedMotion()
 
-  // Nothing to render for an empty/undefined list — guard AFTER the hook so hook
-  // order stays stable across renders.
+  // Nothing to render for an empty/undefined list — guard AFTER the hooks so
+  // hook order stays stable across renders.
   if (!items?.length) return null
 
   return (
     <motion.ol
       ref={ref}
       variants={staggerContainer}
-      initial="hidden"
+      initial={reduce ? false : 'hidden'}
       animate={inView ? 'visible' : 'hidden'}
       className={cn('relative flex flex-col gap-8 border-l border-border pl-8', className)}
       {...props}

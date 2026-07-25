@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import CourseCard from './CourseCard.jsx'
 import Button from '../ui/Button.jsx'
 import { cn } from '../../lib/cn.js'
-import { useScrollReveal, fadeUp, staggerContainer } from '../../hooks/useScrollReveal.js'
+import { useScrollReveal, prefersReducedMotion, fadeUp, staggerContainer } from '../../hooks/useScrollReveal.js'
 import courses from '../../data/courses.js'
 
 /**
@@ -45,8 +45,9 @@ import courses from '../../data/courses.js'
  *    `staggerContainer` and each card wrapper plays `fadeUp` when `inView` flips
  *    to true (the hook triggers once, so cards never re-animate on scroll-back).
  *  - Under prefers-reduced-motion, `useScrollReveal` skips observation and
- *    returns `inView=true` immediately, so cards are present at once rather than
- *    hidden behind a scroll trigger.
+ *    returns `inView=true` immediately AND the grid mounts with
+ *    `initial={false}` (via {@link prefersReducedMotion}), so cards render
+ *    directly at their final state with no enter animation at all (WCAG 2.3.3).
  *
  * Styling — 100% token-driven (Tailwind v4 @theme tokens in `src/index.css`);
  * no hardcoded values (only the exempt 0/auto/inherit/currentColor/transparent),
@@ -79,19 +80,39 @@ import courses from '../../data/courses.js'
  *   the category landing pages.
  * @param {boolean} [props.showFilter=false] When true, renders the category
  *   filter chip group above the grid.
+ * @param {string | ((course: object) => string)} [props.ctaTo] Optional CTA
+ *   destination forwarded to every {@link CourseCard} as its `to`. Pass a string
+ *   for a shared target, or a function `(course) => path` to compute a per-card
+ *   route (the category landing pages pass
+ *   `(c) => `/admission?course=${encodeURIComponent(c.title)}`` so their cards
+ *   drive admission instead of self-linking). When omitted, each card falls back
+ *   to its category-derived route.
+ * @param {string} [props.ctaLabel] Optional CTA label forwarded to every
+ *   {@link CourseCard} (e.g. "Apply now"). When omitted, cards use "Learn more".
  * @param {string} [props.className] Extra classes merged LAST via {@link cn}
  *   onto the root wrapper, so a caller can extend or override layout.
  * @param {object} [props] Any other props (`id`, `aria-*`, `data-*`, …) are
  *   forwarded to the root <div>.
  * @returns {import('react').ReactElement} The course grid section.
  */
-export default function CourseGrid({ items = courses, showFilter = false, className, ...props }) {
+export default function CourseGrid({
+  items = courses,
+  showFilter = false,
+  ctaTo,
+  ctaLabel,
+  className,
+  ...props
+}) {
   // Selected category chip; `'All'` (the default) shows every course.
   const [active, setActive] = useState('All')
 
   // Single, unconditional, top-level reveal hook (satisfies react/rules-of-hooks):
   // `ref` attaches to the grid; `inView` gates the framer-motion stagger reveal.
   const { ref, inView } = useScrollReveal()
+  // Synchronous, SSR-safe read of prefers-reduced-motion (plain helper, not a
+  // hook). When true the grid mounts with `initial={false}` — cards appear at
+  // their final state with no reveal animation at all (WCAG 2.3.3).
+  const reduce = prefersReducedMotion()
 
   // Categories are derived from the CURRENT items (preserving source order) so a
   // pre-filtered `items` prop only offers categories it actually contains.
@@ -127,13 +148,17 @@ export default function CourseGrid({ items = courses, showFilter = false, classN
         <motion.div
           ref={ref}
           variants={staggerContainer}
-          initial="hidden"
+          initial={reduce ? false : 'hidden'}
           animate={inView ? 'visible' : 'hidden'}
           className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           {filtered.map((course) => (
             <motion.div key={course.slug} variants={fadeUp} className="h-full">
-              <CourseCard course={course} />
+              <CourseCard
+                course={course}
+                to={typeof ctaTo === 'function' ? ctaTo(course) : ctaTo}
+                ctaLabel={ctaLabel}
+              />
             </motion.div>
           ))}
         </motion.div>

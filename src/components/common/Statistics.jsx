@@ -2,7 +2,7 @@ import CountUpModule from 'react-countup'
 import { motion } from 'framer-motion'
 import Container from '../ui/Container.jsx'
 import { cn } from '../../lib/cn.js'
-import { useScrollReveal, fadeUp, staggerContainer } from '../../hooks/useScrollReveal.js'
+import { useScrollReveal, prefersReducedMotion, fadeUp, staggerContainer } from '../../hooks/useScrollReveal.js'
 import stats from '../../data/stats.js'
 
 // react-countup@6.5.3 is published as CommonJS (its default export IS the
@@ -46,14 +46,20 @@ const CountUp = typeof CountUpModule === 'function' ? CountUpModule : CountUpMod
  *    flips to true (the hook triggers once and then stops observing, so the
  *    numbers never re-animate on scroll-back).
  *  - Each number is a react-countup `<CountUp>` that is MOUNTED only once
- *    `inView` is true. Because react-countup's `startOnMount` defaults to true,
- *    mounting auto-starts the 0 → value count (2s duration, thousands grouped
- *    with a comma). Before reveal, a static "prefix + 0 + suffix" placeholder is
- *    rendered so the layout never shifts and the reveal is seamless (the mounted
- *    CountUp's first frame is the identical "…0…" string).
- *  - Under prefers-reduced-motion, `useScrollReveal` skips observation and
- *    returns `inView=true` immediately, so the numbers are present at once
- *    rather than hidden behind a scroll trigger.
+ *    `inView` is true AND motion is allowed. Because react-countup's
+ *    `startOnMount` defaults to true, mounting auto-starts the 0 → value count
+ *    (2s duration, thousands grouped with a comma). Before reveal, a static
+ *    "prefix + 0 + suffix" placeholder is rendered so the layout never shifts
+ *    and the reveal is seamless (the mounted CountUp's first frame is the
+ *    identical "…0…" string).
+ *  - Under prefers-reduced-motion the reveal AND the count are both suppressed
+ *    at the JavaScript layer (the CSS reduced-motion reset in src/index.css
+ *    cannot stop react-countup's JS-driven tween): the `<motion.ul>` mounts with
+ *    `initial={false}` (via {@link prefersReducedMotion}) and, instead of
+ *    `<CountUp>`, each metric renders its STATIC final value directly (e.g.
+ *    "5,000+") — so the numbers are present at once, never counting up (WCAG
+ *    2.3.3). The site-wide `<MotionConfig reducedMotion="user">` in src/App.jsx
+ *    is the additional global safety net.
  *
  * Styling — 100% token-driven (Tailwind v4 @theme tokens defined in
  * `src/index.css`); no hardcoded values (only the exempt
@@ -100,6 +106,12 @@ function Statistics({ items = stats, className, ...props }) {
   // `ref` is a callback ref attached to the grid; `inView` gates BOTH the
   // framer-motion reveal and the mounting of the count-up numbers.
   const { ref, inView } = useScrollReveal()
+  // Synchronous, SSR-safe read of prefers-reduced-motion (plain helper, not a
+  // hook). It gates BOTH motion sources here: (1) the framer-motion reveal is
+  // mounted with `initial={false}`, and (2) the react-countup 0→value tween is
+  // replaced by a STATIC final value — a JS-driven count that the CSS
+  // reduced-motion reset in src/index.css cannot neutralize (WCAG 2.3.3).
+  const reduce = prefersReducedMotion()
 
   return (
     <section className={cn('bg-primary-700 py-16 text-white md:py-20', className)} {...props}>
@@ -107,7 +119,7 @@ function Statistics({ items = stats, className, ...props }) {
         <motion.ul
           ref={ref}
           variants={staggerContainer}
-          initial="hidden"
+          initial={reduce ? false : 'hidden'}
           animate={inView ? 'visible' : 'hidden'}
           className="grid grid-cols-2 gap-8 text-center md:grid-cols-4"
         >
@@ -116,23 +128,37 @@ function Statistics({ items = stats, className, ...props }) {
             // Captured in a Capitalized local so JSX renders it as a component.
             const Icon = stat.icon
 
+            // The final, formatted number as plain text (thousands grouped with
+            // a comma to match react-countup's `separator=","`, e.g. "5,000+").
+            const finalValue = `${stat.prefix || ''}${stat.value.toLocaleString('en-US')}${stat.suffix || ''}`
+
+            // Choose the number's rendering by motion policy:
+            //  - reduced motion  → the static final value (NO count tween);
+            //  - in view (motion) → the animated <CountUp> 0 → value;
+            //  - before reveal    → a static "prefix + 0 + suffix" placeholder so
+            //    the layout never shifts (CountUp's first frame is identical).
+            let number
+            if (reduce) {
+              number = finalValue
+            } else if (inView) {
+              number = (
+                <CountUp
+                  end={stat.value}
+                  duration={2}
+                  separator=","
+                  prefix={stat.prefix}
+                  suffix={stat.suffix}
+                />
+              )
+            } else {
+              number = `${stat.prefix || ''}0${stat.suffix || ''}`
+            }
+
             return (
               <motion.li key={stat.label} variants={fadeUp} className="flex flex-col items-center gap-2">
                 {Icon ? <Icon className="h-8 w-8 text-secondary-400" aria-hidden="true" /> : null}
 
-                <span className="text-3xl font-bold md:text-4xl">
-                  {inView ? (
-                    <CountUp
-                      end={stat.value}
-                      duration={2}
-                      separator=","
-                      prefix={stat.prefix}
-                      suffix={stat.suffix}
-                    />
-                  ) : (
-                    `${stat.prefix || ''}0${stat.suffix || ''}`
-                  )}
-                </span>
+                <span className="text-3xl font-bold md:text-4xl">{number}</span>
 
                 <span className="text-sm font-medium text-white/90">{stat.label}</span>
               </motion.li>

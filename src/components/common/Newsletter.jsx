@@ -29,7 +29,9 @@ import siteConfig from '../../data/siteConfig.js'
  *   • loading → submit is disabled and shows a `Spinner` + "Subscribing…".
  *   • error   → a submit-level `role="alert"` message (field errors render
  *               inline through the Input).
- *   • success → a polite `role="status"` confirmation and the form is reset.
+ *   • success → a polite `role="status"` mailto-handoff notice (it does NOT
+ *               falsely claim a subscription was confirmed — it explains the
+ *               email app was opened pre-filled) and the form is reset.
  *
  * Client-side only submission: the site has no backend, so a valid submission
  * opens a pre-filled `mailto:` to the institute (`siteConfig.emailHref`, or a
@@ -109,11 +111,9 @@ export default function Newsletter({
       <p className="mt-1 text-sm text-muted">{subtitle}</p>
 
       {status === 'success' ? (
-        <p
-          role="status"
-          className="mt-4 flex items-center gap-2 text-sm font-medium text-accent-700"
-        >
-          Thanks! Check your email to confirm.
+        <p role="status" className="mt-4 text-sm font-medium text-accent-700">
+          We&rsquo;ve opened your email app with a subscription request pre-filled — just press send and
+          we&rsquo;ll add you to the list. If nothing opened, email us at {siteConfig.email}.
         </p>
       ) : null}
 

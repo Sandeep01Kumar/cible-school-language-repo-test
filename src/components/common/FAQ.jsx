@@ -159,6 +159,12 @@ function FAQ({
   // the FAQ owns its section heading or is embedded under another heading depth.
   const titleAs = `h${clampHeadingLevel(headingLevel)}`
   const questionAs = `h${clampHeadingLevel(questionHeadingLevel ?? clampHeadingLevel(headingLevel) + 1)}`
+  // Capitalized alias so JSX can render the resolved section heading tag
+  // dynamically (React treats a string-valued capitalized identifier as a host
+  // element, the same pattern `SectionHeading` uses for its `as` prop). Consumed
+  // only by the `showHeading === false` branch below to emit the visually-hidden
+  // bridging heading with `sr-only` ON THE HEADING ELEMENT ITSELF.
+  const HiddenSectionHeading = titleAs
 
   // I-58: identity of the current question set. Changing category, reordering,
   // or replacing `items` changes this string, remounting `ui/Accordion` with a
@@ -172,7 +178,19 @@ function FAQ({
       <Container className="max-w-3xl">
         {showHeading ? (
           <SectionHeading eyebrow={eyebrow} title={title} subtitle={subtitle} as={titleAs} />
-        ) : null}
+        ) : (
+          // QA Issue 9: even when the visible section heading is suppressed
+          // (e.g. the /faq page supplies its own page <h1> above), emit a
+          // visually-hidden heading AT THE SECTION LEVEL so the accordion's
+          // question headings (h3 by default) are NOT orphaned directly under
+          // the page <h1> (an h1 -> h3 skip). The `sr-only` class sits on the
+          // heading element itself (identical to the Courses/Faculty/Blog/Events
+          // page fixes), so the heading is present in the accessibility tree and
+          // the document outline while being removed from the visual layout.
+          // Screen-reader users get a labelled section; sighted users see only
+          // the surrounding page heading, unchanged.
+          <HiddenSectionHeading className="sr-only">{title}</HiddenSectionHeading>
+        )}
         <motion.div
           ref={ref}
           variants={fadeUp}

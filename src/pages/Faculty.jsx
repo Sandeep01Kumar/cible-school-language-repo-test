@@ -31,9 +31,11 @@
  *                        WhatsApp / Call), keeping conversion actions reachable.
  *
  * Accessibility (WCAG AA): exactly one `<h1>` (the section heading); the faculty
- * grid is a list of repeated cards whose names are `<h3>`s (an h1→h3 step within
- * a repeated card list is acceptable per the page spec); the CTA closes with an
- * `<h2>`. Sections are semantic `<section>` elements — no page-level `<main>`.
+ * grid is a list of repeated cards whose names are `<h3>`s. A visually-hidden
+ * `<h2 class="sr-only">` ("Faculty members") is rendered immediately before the
+ * grid so the outline steps h1 -> h2 -> h3 with no skipped level (QA Issue 9);
+ * the CTA closes with its own `<h2>`. Sections are semantic `<section>` elements
+ * — no page-level `<main>`.
  *
  * Styling: token-only Tailwind utilities on the 8px spacing scale
  * (`py-12`/`md:py-16`, `pb-16`/`md:pb-20`, `gap-6`, `mb-6`) and a responsive
@@ -80,6 +82,10 @@ function Faculty() {
       </Container>
 
       <Container as="section" className="pb-16 md:pb-20">
+        {/* Visually-hidden section heading so the card grid (each faculty card
+            name is an <h3>) nests under an <h2>, keeping the outline
+            h1 -> h2 -> h3 with no skipped level for assistive tech (QA Issue 9). */}
+        <h2 className="sr-only">Faculty members</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {faculty.map((member) => (
             <FacultyCard key={member.name} member={member} />

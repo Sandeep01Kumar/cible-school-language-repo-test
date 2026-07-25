@@ -26,11 +26,14 @@ import blog from '../data/blog.js'
  *                        visible trail and structured data in agreement.
  * - `<Container as="section">` : the canonical width/gutter wrapper, rendered as
  *                        the correct semantic landmark.
- * - `<SectionHeading as="h1">` : the page's SINGLE `<h1>` (each `BlogCard`
- *                        renders its own `<h3>`, so the heading outline stays
- *                        logical).
+ * - `<SectionHeading as="h1">` : the page's SINGLE `<h1>`. A visually-hidden
+ *                        `<h2 class="sr-only">` ("Latest articles") precedes the
+ *                        grid so each `BlogCard`'s `<h3>` title nests under an
+ *                        `<h2>` (outline h1 -> h2 -> h3, no skipped level — QA
+ *                        Issue 9).
  * - `<BlogCard>`       : one presentational preview card per post; each renders
- *                        its own semantic `<article>` and a "Read more" link.
+ *                        its own semantic `<article>` with the post title as an
+ *                        `<h3>`.
  * - `<CTASection>`     : the admission call-to-action that closes every page.
  *
  * Data comes exclusively from `src/data/blog.js` (single source of truth); the
@@ -74,6 +77,10 @@ function Blog() {
 
       {/* Blog grid */}
       <Container as="section" className="pb-16 md:pb-20">
+        {/* Visually-hidden section heading so each BlogCard's <h3> title nests
+            under an <h2>, keeping the outline h1 -> h2 -> h3 with no skipped
+            level for assistive tech (QA Issue 9). */}
+        <h2 className="sr-only">Latest articles</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {blog.map((post) => (
             <BlogCard key={post.slug} post={post} />

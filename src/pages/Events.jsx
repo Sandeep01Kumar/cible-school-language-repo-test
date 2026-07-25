@@ -33,9 +33,10 @@
  * `gap-6` — with static classNames and no hardcoded values.
  *
  * Accessibility (WCAG AA): exactly ONE <h1> per page (the header); the grid is a
- * list of self-contained <article> landmarks; the trail is a
- * `<nav aria-label="Breadcrumb">`; heading order and focus behaviour are owned
- * by the shared primitives.
+ * list of self-contained <article> landmarks whose titles are <h3>s, preceded by
+ * a visually-hidden `<h2 class="sr-only">` ("Upcoming events") so the outline
+ * steps h1 -> h2 -> h3 with no skipped level (QA Issue 9); the trail is a
+ * `<nav aria-label="Breadcrumb">`.
  *
  * @returns {import('react').ReactElement} The rendered Events page content.
  */
@@ -80,6 +81,10 @@ function Events() {
 
       {/* Events grid */}
       <Container as="section" className="pb-16 md:pb-20">
+        {/* Visually-hidden section heading so each EventCard's <h3> title nests
+            under an <h2>, keeping the outline h1 -> h2 -> h3 with no skipped
+            level for assistive tech (QA Issue 9). */}
+        <h2 className="sr-only">Upcoming events</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
             <EventCard key={event.title} event={event} />

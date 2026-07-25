@@ -10,20 +10,25 @@ const absoluteUrl = (path) => {
 function Seo({ title, description, canonical, image, type = 'website' }) {
   const pageTitle = title ? `${title} | ${siteConfig.name}` : siteConfig.name
   const metaDescription = description || siteConfig.description
-  const canonicalUrl = absoluteUrl(canonical)
+  // Only compute a canonical/og:url when the page explicitly supplies one.
+  // Pages that have no single stable URL — chiefly the catch-all 404 NotFound
+  // route, which can render under ANY unmatched path — must NOT emit a canonical
+  // link; previously an absent `canonical` fell back to the site root, so every
+  // unknown URL wrongly self-canonicalised to the homepage (QA Issue 12).
+  const canonicalUrl = canonical ? absoluteUrl(canonical) : null
   const ogImage = absoluteUrl(image || siteConfig.ogImage)
 
   return (
     <Helmet>
       <title>{pageTitle}</title>
       <meta name="description" content={metaDescription} />
-      <link rel="canonical" href={canonicalUrl} />
+      {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
 
       <meta property="og:type" content={type} />
       <meta property="og:site_name" content={siteConfig.name} />
       <meta property="og:title" content={pageTitle} />
       <meta property="og:description" content={metaDescription} />
-      <meta property="og:url" content={canonicalUrl} />
+      {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
       <meta property="og:image" content={ogImage} />
       <meta property="og:locale" content="en_IN" />
 

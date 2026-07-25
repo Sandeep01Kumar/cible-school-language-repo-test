@@ -3,7 +3,7 @@ import { FaWhatsapp, FaPhoneAlt } from 'react-icons/fa'
 import Container from '../ui/Container.jsx'
 import Button from '../ui/Button.jsx'
 import { cn } from '../../lib/cn.js'
-import { useScrollReveal, fadeUp, fadeIn, staggerContainer } from '../../hooks/useScrollReveal.js'
+import { useScrollReveal, prefersReducedMotion, fadeUp, fadeIn, staggerContainer } from '../../hooks/useScrollReveal.js'
 import siteConfig from '../../data/siteConfig.js'
 import heroImg from '../../assets/hero.svg'
 
@@ -31,10 +31,12 @@ import heroImg from '../../assets/hero.svg'
  * Animation: a subtle entrance reveal built on the project's shared animation
  * system. `useScrollReveal()` returns an `inView` flag that fully respects
  * `prefers-reduced-motion` — under reduced motion (and because the Hero sits
- * above the fold) `inView` is `true` immediately, so the content is shown at
- * once and is NEVER hidden behind an animation. The left column is a
- * `staggerContainer` parent whose children (`fadeUp`) reveal in sequence; the
- * illustration uses a gentle `fadeIn`. No aggressive transforms are added.
+ * above the fold) `inView` is `true` immediately, and each motion element is
+ * gated with `initial={reduce ? false : 'hidden'}` so it mounts DIRECTLY at its
+ * final visible state with no enter animation at all (WCAG 2.3.3). The left
+ * column is a `staggerContainer` parent whose children (`fadeUp`) reveal in
+ * sequence; the illustration uses a gentle `fadeIn`. No aggressive transforms
+ * are added.
  *
  * Design-system compliance (Tailwind v4 @theme tokens from src/index.css; the
  * project rule is ZERO hardcoded style values — every value traces to a token
@@ -77,6 +79,11 @@ function Hero({
   // Single reveal hook at the top level (Rules of Hooks). `inView` drives both
   // columns; it is true immediately above the fold and under reduced motion.
   const { ref, inView } = useScrollReveal()
+  // Synchronous, SSR-safe read of the OS "reduce motion" preference (plain
+  // helper, not a hook). When true, each motion element mounts with
+  // `initial={false}` so it renders DIRECTLY at its final state — no enter
+  // reveal at all (WCAG 2.3.3). `useScrollReveal` re-renders on runtime toggle.
+  const reduce = prefersReducedMotion()
 
   return (
     <section className={cn('bg-surface', className)} {...props}>
@@ -86,7 +93,7 @@ function Hero({
         <motion.div
           ref={ref}
           variants={staggerContainer}
-          initial="hidden"
+          initial={reduce ? false : 'hidden'}
           animate={inView ? 'visible' : 'hidden'}
           className="flex flex-col gap-6"
         >
@@ -139,7 +146,7 @@ function Hero({
             same `inView` flag. `width`/`height` prevent layout shift (CLS). */}
         <motion.div
           variants={fadeIn}
-          initial="hidden"
+          initial={reduce ? false : 'hidden'}
           animate={inView ? 'visible' : 'hidden'}
           className="flex justify-center"
         >

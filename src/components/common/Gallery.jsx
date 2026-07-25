@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, A11y, Keyboard } from 'swiper/modules'
 import { FiX } from 'react-icons/fi'
@@ -35,11 +36,21 @@ import 'swiper/css/a11y'
  *   `aria-label` ("View image: <alt>"), so activation, focusability and focus
  *   rings (global `:focus-visible` in `src/index.css`) come for free.
  * - The lightbox is a `role="dialog" aria-modal="true"` labelled by the image
- *   `alt`. It can be dismissed via the labelled Close button, the Escape key, or
- *   a click on the backdrop scrim. On open, focus is moved into the dialog (the
- *   Close button); on close, focus is restored to the element that opened it,
- *   and background scroll is locked while it is open — the standard modal focus
- *   contract for keyboard and screen-reader users.
+ *   `alt`, PORTALLED to `<body>` (a sibling of `#root`) so it can escape the app
+ *   shell's stacking/inert scope. It can be dismissed via the labelled Close
+ *   button, the Escape key, or a click on the backdrop scrim. It implements the
+ *   full modal contract for keyboard and screen-reader users (WCAG 2.1.2 /
+ *   4.1.2): on open, focus moves into the dialog (the Close button); Tab and
+ *   Shift+Tab are TRAPPED so focus cycles only among the dialog's focusable
+ *   elements and can never reach the background; the entire app shell (`#root`)
+ *   is made `inert` while the dialog is open so neither the keyboard nor
+ *   assistive technology can reach the page behind it; background scroll is
+ *   locked; and on close the `inert` flag is cleared BEFORE focus is restored to
+ *   the element that opened the dialog (focusing an element inside an inert tree
+ *   is a no-op, so order matters).
+ * - The Close button is a comfortably tappable target: it is centred via
+ *   `inline-flex` and sized to a 44×44px minimum (`min-h-11 min-w-11`) so it
+ *   meets the touch-target guideline on mobile.
  * - Slide captions use semantic `<figure>` / `<figcaption>`.
  *
  * Motion:
@@ -90,27 +101,100 @@ export default function Gallery({ images = [], className, lightbox = true, ...pr
   // Ref to the lightbox Close button so focus can be moved into the dialog when
   // it opens (WCAG AA modal focus management).
   const closeButtonRef = useRef(null)
+  // Ref to the dialog container so the keyboard handler can scope the Tab focus
+  // trap to the elements INSIDE the modal.
+  const dialogRef = useRef(null)
+  // Ref to the exact trigger element that opened the dialog. Captured from the
+  // click's `currentTarget` (NOT `document.activeElement`, which can already be
+  // `<body>` — e.g. a programmatic click that never set focus), so focus can be
+  // reliably RESTORED to the opener on close (WAI-ARIA dialog pattern).
+  const openerRef = useRef(null)
 
   // Stable close handler shared by the Escape listener, the scrim click, and the
   // Close button; memoised so the effect dependency below stays stable.
   const close = useCallback(() => setOpenIndex(null), [])
 
-  // While the lightbox is open: close on Escape, lock background scroll, move
-  // focus into the dialog, and restore focus to the opener on close. `document`
-  // is only ever touched here, inside the effect (never during render).
+  // While the lightbox is open, enforce the full modal contract (WCAG 2.1.2
+  // "No Keyboard Trap" done RIGHT — i.e. a deliberate, escapable focus trap —
+  // and 4.1.2): close on Escape; TRAP Tab / Shift+Tab so focus cycles only among
+  // the dialog's focusable elements and can never reach the background; make the
+  // rest of the app (`#root`) `inert` so neither the keyboard nor assistive tech
+  // can reach it (the dialog itself is portalled to <body>, OUTSIDE #root, so it
+  // stays interactive); lock background scroll; move focus into the dialog on
+  // open; and restore focus to the opener on close. `document` is only ever
+  // touched here, inside the effect (never during render).
   useEffect(() => {
-    if (openIndex === null) return
+    if (openIndex === null) return undefined
     const previouslyFocused = document.activeElement
+    const rootEl = document.getElementById('root')
+
     const onKey = (e) => {
-      if (e.key === 'Escape') close()
+      if (e.key === 'Escape') {
+        close()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const dialog = dialogRef.current
+      if (!dialog) return
+      // Focusable descendants of the dialog, in DOM order. In this modal that is
+      // just the Close button, but the trap is written generically so it stays
+      // correct if the dialog ever gains more controls.
+      const focusables = Array.from(
+        dialog.querySelectorAll(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+      if (focusables.length === 0) {
+        // Nothing focusable inside — keep focus pinned to the dialog itself.
+        e.preventDefault()
+        return
+      }
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      const active = document.activeElement
+      if (e.shiftKey) {
+        // Shift+Tab off the first element (or from outside) wraps to the last.
+        if (active === first || !dialog.contains(active)) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else if (active === last || !dialog.contains(active)) {
+        // Tab off the last element (or from outside) wraps to the first.
+        e.preventDefault()
+        first.focus()
+      }
     }
+
     document.addEventListener('keydown', onKey)
     document.body.classList.add('overflow-hidden')
+    // Hide the entire app shell from AT and remove it from the tab order. The
+    // dialog is portalled to <body> (a sibling of #root), so it is unaffected.
+    if (rootEl) rootEl.inert = true
     closeButtonRef.current?.focus()
+
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.classList.remove('overflow-hidden')
-      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+      // Clear inert BEFORE restoring focus — focus() on an element inside an
+      // inert subtree is a no-op, so the opener must be focusable again first.
+      if (rootEl) rootEl.inert = false
+      // Restore focus to the control that opened the dialog (WAI-ARIA dialog
+      // pattern). This cleanup runs in React's passive phase, AFTER the portal
+      // dialog has been removed from the DOM (which blurs the Close button to
+      // <body>), so this is the final focus operation and it must target a LIVE,
+      // focusable node. Prefer the explicitly-captured opener; fall back to the
+      // element that was focused before opening. `document.body` is skipped
+      // (focusing it is a no-op and would leave the user at the document start).
+      const opener = openerRef.current
+      const restoreTarget =
+        opener && opener.isConnected
+          ? opener
+          : previouslyFocused instanceof HTMLElement &&
+              previouslyFocused.isConnected &&
+              previouslyFocused !== document.body
+            ? previouslyFocused
+            : null
+      restoreTarget?.focus()
     }
   }, [openIndex, close])
 
@@ -152,7 +236,12 @@ export default function Gallery({ images = [], className, lightbox = true, ...pr
                 {lightbox ? (
                   <button
                     type="button"
-                    onClick={() => setOpenIndex(i)}
+                    onClick={(e) => {
+                      // Capture the exact trigger node so focus can be restored
+                      // to it when the lightbox closes (see the effect cleanup).
+                      openerRef.current = e.currentTarget
+                      setOpenIndex(i)
+                    }}
                     aria-label={`View image: ${img.alt}`}
                     className="block w-full overflow-hidden rounded-2xl bg-surface"
                   >
@@ -172,40 +261,44 @@ export default function Gallery({ images = [], className, lightbox = true, ...pr
         })}
       </Swiper>
 
-      {lightbox && activeImage ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={activeImage.alt}
-          onClick={close}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/90 p-4"
-        >
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={close}
-            aria-label="Close image viewer"
-            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-          >
-            <FiX className="h-6 w-6" aria-hidden="true" />
-          </button>
-          <figure
-            className="m-0 flex flex-col items-center gap-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={activeImage.src}
-              alt={activeImage.alt}
-              className="max-h-[85vh] max-w-full rounded-2xl object-contain"
-            />
-            {activeImage.caption ? (
-              <figcaption className="text-center text-sm text-white/80">
-                {activeImage.caption}
-              </figcaption>
-            ) : null}
-          </figure>
-        </div>
-      ) : null}
+      {lightbox && activeImage && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={activeImage.alt}
+              onClick={close}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/90 p-4"
+            >
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={close}
+                aria-label="Close image viewer"
+                className="absolute right-4 top-4 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+              >
+                <FiX className="h-6 w-6" aria-hidden="true" />
+              </button>
+              <figure
+                className="m-0 flex flex-col items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={activeImage.src}
+                  alt={activeImage.alt}
+                  className="max-h-[85vh] max-w-full rounded-2xl object-contain"
+                />
+                {activeImage.caption ? (
+                  <figcaption className="text-center text-sm text-white/80">
+                    {activeImage.caption}
+                  </figcaption>
+                ) : null}
+              </figure>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   )
 }

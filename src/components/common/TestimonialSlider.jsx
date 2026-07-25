@@ -1,11 +1,14 @@
+import { useRef, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, A11y, Autoplay } from 'swiper/modules'
+import { FaPlay, FaPause } from 'react-icons/fa'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import 'swiper/css/a11y'
 import 'swiper/css/autoplay'
 import ReviewCard from './ReviewCard.jsx'
+import Button from '../ui/Button.jsx'
 import { cn } from '../../lib/cn.js'
 import { prefersReducedMotion } from '../../hooks/useScrollReveal.js'
 import testimonials from '../../data/testimonials.js'
@@ -45,10 +48,24 @@ import testimonials from '../../data/testimonials.js'
  * which is acceptable under reduced motion. `prefersReducedMotion` is a plain
  * helper (not a hook), so it is read synchronously during render.
  *
+ * Pause / Stop control (WCAG 2.2.2 "Pause, Stop, Hide" — REQUIRED for auto-
+ * advancing content that runs longer than 5s): when autoplay is active (motion
+ * allowed) the slider renders a visible, keyboard-operable Play/Pause toggle
+ * (the canonical <Button>) that stops and restarts Swiper's autoplay controller
+ * via a ref to the instance. Its `isPlaying` state is kept in sync with Swiper's
+ * own `autoplayStart` / `autoplayStop` events, and the button's visible label
+ * flips ("Pause autoplay" ↔ "Play autoplay") so the action is always
+ * unambiguous. `pauseOnMouseEnter` additionally pauses rotation on hover (with
+ * `disableOnInteraction: false` so a swipe never silently kills it). Under
+ * reduced motion nothing auto-moves, so the toggle is intentionally not rendered.
+ *
  * Accessibility (WCAG AA):
  * - Swiper's `A11y` module labels the navigation arrows and the region, and the
  *   `clickable` pagination bullets are keyboard-focusable/operable, so the whole
  *   carousel is usable by keyboard and screen-reader users.
+ * - The Play/Pause toggle is a real <button> (via the shared <Button>), fully
+ *   keyboard-operable with a visible focus ring; its icon is decorative
+ *   (`aria-hidden`) and its changing visible text is the accessible name.
  * - Each slide's <ReviewCard> carries the accessible testimonial structure
  *   (<figure>/<blockquote>/<figcaption>) and exposes its star score once as a
  *   single labelled `role="img"` — colour is never the sole indicator of meaning.
@@ -93,35 +110,88 @@ const MODULES = [Navigation, Pagination, A11y, Autoplay]
 const BREAKPOINTS = { 768: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }
 const PAGINATION = { clickable: true }
 const A11Y = { enabled: true }
-const AUTOPLAY = { delay: 5000, disableOnInteraction: true }
+// Autoplay config (WCAG 2.2.2 "Pause, Stop, Hide"): `pauseOnMouseEnter` pauses
+// the rotation while a pointer is over the carousel and resumes on leave, which
+// requires `disableOnInteraction: false` so a swipe/arrow does not silently kill
+// autoplay. The explicit, keyboard-operable Play/Pause toggle below is the
+// primary, always-available mechanism to stop the automatic movement.
+const AUTOPLAY = { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }
 
 export default function TestimonialSlider({ items = testimonials, className, ...props }) {
-  // Render nothing when there is no content — keeps callers free of guards.
-  if (!items?.length) return null
-
   // Plain helper (intentionally NOT named use*), safe to read synchronously
   // during render: true when the user has requested reduced motion at the OS
   // level. When true, autoplay is disabled so the carousel never moves on its own.
   const reduced = prefersReducedMotion()
 
+  // Live handle to the Swiper instance so the Play/Pause toggle can drive its
+  // autoplay controller. Play/Pause reflects whether autoplay is currently
+  // running; it starts running only when motion is allowed. BOTH hooks are
+  // declared UNCONDITIONALLY at the top level — before the early return below —
+  // so hook order is stable every render (react/rules-of-hooks).
+  const swiperRef = useRef(null)
+  const [isPlaying, setIsPlaying] = useState(!reduced)
+
+  // Render nothing when there is no content — AFTER the hooks so their order
+  // never changes across renders. Keeps callers free of empty-state guards.
+  if (!items?.length) return null
+
+  // Explicit user control (WCAG 2.2.2): stop/start Swiper's autoplay. Guarded so
+  // it is a no-op if the instance or its autoplay controller is not ready.
+  const togglePlay = () => {
+    const swiper = swiperRef.current
+    if (!swiper?.autoplay) return
+    if (isPlaying) {
+      swiper.autoplay.stop()
+    } else {
+      swiper.autoplay.start()
+    }
+  }
+
   return (
-    <Swiper
-      modules={MODULES}
-      spaceBetween={24}
-      slidesPerView={1}
-      navigation
-      pagination={PAGINATION}
-      a11y={A11Y}
-      autoplay={reduced ? false : AUTOPLAY}
-      breakpoints={BREAKPOINTS}
-      className={cn('pb-12', className)}
-      {...props}
-    >
-      {items.map((t, i) => (
-        <SwiperSlide key={t.name || i} className="h-auto">
-          <ReviewCard review={t} className="h-full" />
-        </SwiperSlide>
-      ))}
-    </Swiper>
+    <div className={cn('relative', className)}>
+      {/* Play/Pause toggle — the required mechanism to pause the auto-rotating
+          content. Rendered only when autoplay is actually active (i.e. motion is
+          allowed); under reduced motion nothing auto-moves, so no control is
+          needed. It is the canonical <Button> (a real, keyboard-operable
+          <button> with a visible focus ring); the icon is decorative and the
+          visible text is the accessible name, which flips with state so the
+          control's action is always unambiguous. */}
+      {!reduced ? (
+        <div className="mb-4 flex justify-end">
+          <Button type="button" variant="outline" size="md" onClick={togglePlay}>
+            {isPlaying ? (
+              <FaPause aria-hidden="true" className="h-4 w-4" />
+            ) : (
+              <FaPlay aria-hidden="true" className="h-4 w-4" />
+            )}
+            {isPlaying ? 'Pause autoplay' : 'Play autoplay'}
+          </Button>
+        </div>
+      ) : null}
+
+      <Swiper
+        onSwiper={(swiper) => {
+          swiperRef.current = swiper
+        }}
+        onAutoplayStart={() => setIsPlaying(true)}
+        onAutoplayStop={() => setIsPlaying(false)}
+        modules={MODULES}
+        spaceBetween={24}
+        slidesPerView={1}
+        navigation
+        pagination={PAGINATION}
+        a11y={A11Y}
+        autoplay={reduced ? false : AUTOPLAY}
+        breakpoints={BREAKPOINTS}
+        className="pb-12"
+        {...props}
+      >
+        {items.map((t, i) => (
+          <SwiperSlide key={t.name || i} className="h-auto">
+            <ReviewCard review={t} className="h-full" />
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </div>
   )
 }

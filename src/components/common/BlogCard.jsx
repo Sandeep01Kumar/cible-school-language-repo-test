@@ -1,6 +1,5 @@
 import Card from '../ui/Card.jsx'
 import Badge from '../ui/Badge.jsx'
-import Button from '../ui/Button.jsx'
 import { cn } from '../../lib/cn.js'
 import { FiCalendar, FiClock } from 'react-icons/fi'
 
@@ -14,9 +13,11 @@ import { FiCalendar, FiClock } from 'react-icons/fi'
  *
  * It is purely presentational: every value is read from the `post` prop (source
  * of truth `src/data/blog.js`) and it composes the shared primitives rather than
- * restyling raw markup — `ui/Card` (the surface), `ui/Badge` (the category pill)
- * and `ui/Button` (the "Read more" CTA). `ui/Button` is polymorphic, so passing
- * `to` renders a react-router <Link> internally; this file never imports Link.
+ * restyling raw markup — `ui/Card` (the surface) and `ui/Badge` (the category
+ * pill). It is a NON-interactive preview: the app's frozen route table has no
+ * per-article route, so the card intentionally carries no navigational CTA — the
+ * former "Read more" button linked back to the `/blog` listing the card already
+ * sits in (a self-referential dead end), which was removed for QA Issue 8.
  *
  * Banner: article imagery is client-supplied and currently absent (`image` is
  * `null` for every entry in `blog.js`). With no image the card renders a branded
@@ -46,8 +47,6 @@ import { FiCalendar, FiClock } from 'react-icons/fi'
  *   `{ slug, title, excerpt, date, author, category, readTime, image, content }`.
  *   `date` is an ISO string; `readTime` is a string ("5 min read") or a number of
  *   minutes; `image` is a URL or `null` (→ branded gradient fallback).
- * @param {string} [props.to] - Optional "Read more" route override. There is no
- *   per-slug blog route in the app, so this defaults to `/blog`.
  * @param {string} [props.className] - Extra classes merged LAST onto the Card root.
  * @param {object} [props] - Any other props are forwarded to the Card root.
  * @returns {import('react').ReactElement | null} The card, or `null` when `post`
@@ -69,13 +68,10 @@ function formatDate(iso) {
   }).format(date)
 }
 
-function BlogCard({ post, to: toProp, className, ...props }) {
+function BlogCard({ post, className, ...props }) {
   // Defensive guard: one bad list entry must never crash the whole grid.
   if (!post) return null
 
-  // No per-slug blog route exists → default to the blog listing, while letting a
-  // caller override the destination via `to`.
-  const to = toProp || '/blog'
   const formattedDate = formatDate(post.date)
   const readTime =
     typeof post.readTime === 'number' ? `${post.readTime} min read` : post.readTime
@@ -134,18 +130,6 @@ function BlogCard({ post, to: toProp, className, ...props }) {
           ) : null}
           {post.author ? <span>By {post.author}</span> : null}
         </div>
-
-        {/* Conversion CTA — pushed to the bottom (mt-auto) so cards align across a
-            grid. aria-label disambiguates the repeated "Read more" links. */}
-        <Button
-          to={to}
-          variant="outline"
-          size="sm"
-          className="mt-auto"
-          aria-label={`Read more: ${post.title}`}
-        >
-          Read more
-        </Button>
       </div>
     </Card>
   )

@@ -25,7 +25,10 @@ import logo from '../../assets/logo.svg'
  *   • `md`    — the inline click-to-call action appears
  *   • `>= lg` — the full 7-link row appears and the hamburger is hidden
  * The `< lg` experience opens a right-anchored slide-in drawer that repeats the
- * links, the call action and the Admission CTA.
+ * links, the call action and the Admission CTA. If the viewport is resized up to
+ * the `lg` breakpoint WHILE the drawer is open, a `matchMedia` listener closes
+ * it automatically so the body scroll-lock is released (otherwise the drawer
+ * would hide via `lg:hidden` but leave scrolling locked on desktop).
  *
  * Landmark, sticky & stacking coordination (IMPORTANT):
  *   • Layout owns the sticky `<header>` (`sticky top-0 z-50`); the visual bar
@@ -61,6 +64,9 @@ import logo from '../../assets/logo.svg'
  *   • Icons are decorative (`aria-hidden`); every control carries text or an
  *     `aria-label`. The global `:focus-visible` ring (src/index.css) is left
  *     intact for keyboard users.
+ *   • The icon-only hamburger and drawer Close controls are sized to a 44×44px
+ *     minimum (`min-h-11 min-w-11`, icon centred via `inline-flex`) so they meet
+ *     the touch-target guideline on mobile.
  *
  * Styling is entirely token-driven (Tailwind v4 `@theme` tokens from
  * src/index.css) on the 8px spacing scale — every colour, radius, spacing and
@@ -129,9 +135,37 @@ function Navbar({ className }) {
     document.addEventListener('keydown', onKeyDown)
     document.body.style.overflow = 'hidden'
 
+    // Auto-close the drawer when the viewport grows to the `lg` breakpoint
+    // (Tailwind default 64rem) — the width at which BOTH the hamburger and the
+    // drawer become `lg:hidden`. Without this, resizing mobile → desktop while
+    // the drawer is open would visually hide the drawer but leave `open === true`,
+    // so this effect would keep the body scroll-lock (`overflow: hidden`) applied
+    // and the desktop page could never be scrolled (the reported bug). Setting
+    // `open` to false here unmounts the drawer and runs the cleanup below, which
+    // restores `document.body.style.overflow`. The listener supports the modern
+    // `addEventListener` API with the legacy `addListener` fallback.
+    const desktopQuery = window.matchMedia('(min-width: 64rem)')
+    const onViewportChange = (event) => {
+      if (event.matches) setOpen(false)
+    }
+    if (desktopQuery.matches) {
+      // Already at/above `lg` when opened — close immediately.
+      setOpen(false)
+    }
+    if (typeof desktopQuery.addEventListener === 'function') {
+      desktopQuery.addEventListener('change', onViewportChange)
+    } else {
+      desktopQuery.addListener(onViewportChange)
+    }
+
     return () => {
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = ''
+      if (typeof desktopQuery.removeEventListener === 'function') {
+        desktopQuery.removeEventListener('change', onViewportChange)
+      } else {
+        desktopQuery.removeListener(onViewportChange)
+      }
       if (toggle) toggle.focus()
     }
   }, [open])
@@ -180,7 +214,7 @@ function Navbar({ className }) {
 
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-md p-2 text-foreground hover:bg-surface lg:hidden"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md p-2 text-foreground hover:bg-surface lg:hidden"
                 aria-label="Open menu"
                 aria-expanded={open}
                 aria-controls="mobile-nav"
@@ -214,7 +248,7 @@ function Navbar({ className }) {
           >
             <button
               type="button"
-              className="inline-flex items-center justify-center self-end rounded-md p-2 text-foreground hover:bg-surface"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center self-end rounded-md p-2 text-foreground hover:bg-surface"
               aria-label="Close menu"
               onClick={() => setOpen(false)}
             >

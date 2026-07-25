@@ -24,9 +24,11 @@ import { cn } from '../../lib/cn.js'
  * src/index.css) — every color, radius, spacing and size resolves to a design
  * token or utility, with no hardcoded values. The blue / orange / green fills
  * are locked to WCAG-AA-compliant shades: white text is used ONLY on
- * primary-600, secondary-600 (hover -700) and accent-700 (hover -800); the
+ * primary-600, secondary-700 (hover -800) and accent-700 (hover -800); the
  * `outline` variant renders primary-600 text on a transparent surface with a
- * primary-50 hover tint. Sizes sit on the 8px scale — md (44px) and lg (48px)
+ * primary-50 hover tint. (secondary-600 = #ea580c is only ~3.56:1 under white
+ * text and fails AA, so the secondary fill starts at -700 = #c2410c ≈ 5.18:1.)
+ * Sizes sit on the 8px scale — md (44px) and lg (48px)
  * meet the WCAG touch-target guideline; sm (36px) is for compact contexts.
  *
  * Accessibility: a semantic element is rendered for every usage (never a
@@ -56,10 +58,12 @@ const base =
 
 // Variant fills — locked to AA-compliant shades (see the WCAG note above and
 // the guidance block in src/index.css). Do NOT substitute lighter shades
-// (secondary-500 / accent-600) under white text; they fail AA for normal text.
+// (secondary-500 / secondary-600 / accent-600) under white text; they fail AA
+// for normal text (secondary-600 = #ea580c is only ~3.56:1, secondary-700 =
+// #c2410c ≈ 5.18:1).
 const variants = {
   primary: 'bg-primary-600 text-white hover:bg-primary-700',
-  secondary: 'bg-secondary-600 text-white hover:bg-secondary-700',
+  secondary: 'bg-secondary-700 text-white hover:bg-secondary-800',
   accent: 'bg-accent-700 text-white hover:bg-accent-800',
   outline: 'border-2 border-primary-600 bg-transparent text-primary-600 hover:bg-primary-50',
 }

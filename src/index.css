@@ -25,10 +25,12 @@
  *   • Body text  : foreground `#0f172a` on white ≈ 17:1  → AA/AAA pass.
  *   • Muted text : muted `#475569` on white       ≈ 7.5:1 → AA pass.
  *   • Links      : primary-600 `#2563eb` on white  ≈ 4.6:1 → AA pass (normal text).
- *   • Buttons with WHITE text need a >= 4.5:1 fill: use `secondary-600/700` and
- *     `accent-700` (NOT `secondary-500`/`accent-600`, which fail AA for normal
- *     white text). Alternatively pair light secondary/accent fills with dark
- *     (`foreground`) text. The shared `Button` primitive honors these rules.
+ *   • Buttons with WHITE text need a >= 4.5:1 fill: use `secondary-700`
+ *     (#c2410c ≈ 5.18:1) and `accent-700` (NOT `secondary-500`/`secondary-600`
+ *     or `accent-600` — secondary-600 = #ea580c is only ≈ 3.56:1 and fails AA
+ *     for normal white text). Alternatively pair light secondary/accent fills
+ *     with dark (`foreground`) text. The shared `Button` primitive honors these
+ *     rules (its secondary fill starts at -700).
  * ----------------------------------------------------------------------------
  */
 
@@ -48,7 +50,8 @@
   --color-primary-900: #1e3a8a;
 
   /* ===== Color · Secondary — Orange ======================================= */
-  /* Anchor: secondary-500 (#f97316). For white text prefer 600/700 (AA). */
+  /* Anchor: secondary-500 (#f97316). For WHITE text use 700+ (secondary-700
+     #c2410c ≈ 5.18:1 AA pass; secondary-600 #ea580c ≈ 3.56:1 FAILS AA). */
   --color-secondary-50: #fff7ed;
   --color-secondary-100: #ffedd5;
   --color-secondary-200: #fed7aa;

@@ -37,9 +37,11 @@
  *
  * Accessibility (WCAG AA): exactly one `<h1>` (the section heading). The grid's
  * filter chips are keyboard-accessible `<button>`s with `aria-pressed` (owned by
- * `CourseGrid`), and each course card title is an `<h3>` (an h1→h3 step within a
- * repeated card grid is acceptable per the page spec); the CTA closes with an
- * `<h2>`. Sections are semantic `<section>` elements — no page-level `<main>`.
+ * `CourseGrid`), and each course card title is an `<h3>`. A visually-hidden
+ * `<h2 class="sr-only">` ("All courses") is rendered immediately before the grid
+ * so the outline steps h1 -> h2 -> h3 with no skipped level (QA Issue 9); the CTA
+ * closes with its own `<h2>`. Sections are semantic `<section>` elements — no
+ * page-level `<main>`.
  *
  * Styling: token-only Tailwind utilities on the 8px spacing scale
  * (`py-12`/`md:py-16`, `pb-16`/`md:pb-20`, `mb-6`). No arbitrary values, no
@@ -88,6 +90,10 @@ function Courses() {
 
       {/* Full catalog with category filter */}
       <Container as="section" className="pb-16 md:pb-20">
+        {/* Visually-hidden section heading so the card grid (each course card
+            title is an <h3>) nests under an <h2>, keeping the outline
+            h1 -> h2 -> h3 with no skipped level for assistive tech (QA Issue 9). */}
+        <h2 className="sr-only">All courses</h2>
         <CourseGrid items={courses} showFilter />
       </Container>
 

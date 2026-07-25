@@ -132,7 +132,11 @@ function ScienceCoaching() {
       <Container as="section" className="py-16 md:py-20">
         <SectionHeading eyebrow="Programs" title="Science Courses" subtitle="Choose your stream." />
         <div className="mt-10">
-          <CourseGrid items={scienceCourses} />
+          <CourseGrid
+            items={scienceCourses}
+            ctaTo={(c) => `/admission?course=${encodeURIComponent(c.title)}`}
+            ctaLabel="Apply now"
+          />
         </div>
       </Container>
 
