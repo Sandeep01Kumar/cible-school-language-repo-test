@@ -242,6 +242,66 @@ from the client-only architecture and **must be understood/configured at deploy 
   only transmitted if they choose to send that draft, and each form discloses this
   third-party handoff adjacent to the submit action and links to the Privacy Policy.
 
+### Response headers (host / edge configuration)
+
+The SPA ships no server, so HTTP response headers are **not set by application code** —
+they are configured on the static host / CDN / edge that serves `dist/`. The following
+hardening headers are **recommended for production** and are tuned to the exact
+third-party origins this site actually uses (Google Fonts, plus a Google Maps embed on
+the Contact page). Apply them at the edge and verify with a tool such as Mozilla
+Observatory or `curl -I` (the CSP is shown wrapped for readability; send it as a single
+header value):
+
+```
+Content-Security-Policy: default-src 'self';
+  script-src 'self';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data:;
+  frame-src https://www.google.com;
+  connect-src 'self';
+  base-uri 'self';
+  object-src 'none';
+  frame-ancestors 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+```
+
+CSP notes specific to this app:
+
+- `style-src` includes `'unsafe-inline'` because Framer Motion and Swiper set inline
+  `style` attributes at runtime for animations/transforms; this relaxation applies to
+  **styles only**, never scripts. To run a strict inline-style CSP, drive those effects
+  with classes/CSS variables and then drop `'unsafe-inline'`.
+- `style-src` / `font-src` allow `https://fonts.googleapis.com` / `https://fonts.gstatic.com`
+  for the Inter web font loaded in `index.html`; self-hosting Inter lets you tighten both
+  back to `'self'` and remove the font preconnects.
+- `frame-src https://www.google.com` is required **only** for the Contact page's Google
+  Maps `<iframe>`; remove it if the map embed is removed.
+- No `script-src` allowance is needed for the JSON-LD injected via `react-helmet-async`:
+  `<script type="application/ld+json">` is a non-executed data block, so CSP does not
+  gate it.
+- `frame-ancestors 'self'` is the modern clickjacking control; `X-Frame-Options: SAMEORIGIN`
+  is retained alongside it for legacy browsers.
+
+Caching & CORS:
+
+- **Immutable static assets.** `npm run build` emits content-hashed files under
+  `dist/assets/*` (the hash changes whenever content changes), so serve them with
+  `Cache-Control: public, max-age=31536000, immutable`. Serve the non-hashed `index.html`
+  with `Cache-Control: no-cache` (or a short `max-age` + `must-revalidate`) so a new deploy
+  is picked up on the next visit rather than being pinned to a stale shell.
+- **CORS.** The app makes no cross-origin data requests, so it needs no permissive CORS.
+  Do **not** emit `Access-Control-Allow-Origin: *` on the HTML document; if a CDN needs CORS
+  for the hashed asset/font files, scope it narrowly and limit methods to `GET, HEAD`.
+- **Genuine 404 status.** As noted under [Deployment & Hosting](#deployment--hosting),
+  unmatched paths currently return a *soft* 404 (HTTP 200 with the in-app NotFound page);
+  returning a true `404` status requires host/edge configuration that recognises unknown
+  paths ahead of the SPA history-fallback rewrite.
+
 ## Limitations
 
 This repository is a front-end website. The following are **intentionally not part of

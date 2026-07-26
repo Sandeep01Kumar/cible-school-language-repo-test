@@ -19,8 +19,11 @@ const crumbs = [
 // forms do not transmit data to a CIBLE server — they open a pre-filled
 // WhatsApp or email draft on the visitor's own device, which is sent only if
 // the visitor presses send. The text therefore discloses the third parties that
-// process that message (WhatsApp/Meta and email providers), corrects the earlier
-// false "analytics/collection/retention/deletion" claims, and addresses minors.
+// process that message (WhatsApp/Meta and email providers) as well as the
+// third-party content the site itself loads (Google Fonts on every page and an
+// embedded Google Map on the Contact page, both of which send request data such
+// as the visitor's IP address to Google), corrects the earlier false
+// "analytics/collection/retention/deletion" claims, and addresses minors.
 //
 // This remains representative pre-launch copy: it MUST be reviewed by legal
 // counsel and approved by the institute before publication (AAP §0.7.2 —
@@ -40,8 +43,12 @@ const sections = [
     body: 'Because your message is delivered through WhatsApp or email, your information is handled by those third parties. WhatsApp messages are processed by WhatsApp and Meta under the WhatsApp and Meta privacy policies; email is processed by your email provider and by the provider of the institute\u2019s inbox. Their handling of your data is governed by their own terms and privacy policies, which we do not control. Please review them before sending sensitive information.',
   },
   {
-    heading: 'No Tracking, Analytics or Advertising Cookies',
-    body: 'This website does not use analytics, advertising, tracking pixels, or cookies that identify you, and it does not build visitor profiles. We do not collect browsing data about you.',
+    heading: 'Content Delivered by Google (Fonts and Maps)',
+    body: 'To present the site, we load the Inter typeface from Google Fonts on every page, and the Contact page embeds an interactive Google Map so visitors can find the institute. When your browser requests these resources, standard technical data \u2014 including your IP address, browser type and the page being viewed \u2014 is sent to Google in order to deliver them. This is inherent to how web fonts and embedded maps work; we do not use it to track or identify you. Google\u2019s handling of that data is governed by Google\u2019s own privacy policy, which we do not control.',
+  },
+  {
+    heading: 'No Tracking or Analytics by CIBLE',
+    body: 'CIBLE itself does not use analytics, advertising, tracking pixels, or cookies that identify you; we build no visitor profiles and keep no server-side log of your browsing. Aside from the technical request data sent to Google when the fonts and the Contact-page map load \u2014 described in the section above \u2014 no browsing data about you is collected by this website.',
   },
   {
     heading: 'How We Use Your Information',
@@ -71,7 +78,9 @@ const sections = [
  * with no backend — forms open a pre-filled WhatsApp/email draft on the
  * visitor's device rather than transmitting data to a CIBLE server — so the
  * copy discloses the third parties (WhatsApp/Meta, email providers) that
- * process those messages, states that no analytics/tracking is used, and
+ * process those messages, discloses the third-party content the site loads
+ * (Google Fonts and the embedded Google Map, which send request data to
+ * Google), clarifies that CIBLE itself performs no analytics/tracking, and
  * addresses minors. It is lazy-loaded by the route table in `src/App.jsx`
  * (`<Route path="privacy-policy" element={<PrivacyPolicy />} />`) and rendered
  * inside the shared `<Layout>`, so this component renders ONLY page content.

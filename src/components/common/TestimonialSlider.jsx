@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Navigation, Pagination, A11y, Autoplay } from 'swiper/modules'
+import { Navigation, Pagination, A11y, Autoplay, Keyboard } from 'swiper/modules'
 import { FaPlay, FaPause } from 'react-icons/fa'
 import 'swiper/css'
 import 'swiper/css/navigation'
@@ -19,8 +19,9 @@ import testimonials from '../../data/testimonials.js'
  * THE canonical student/parent testimonial carousel for the SPA (AAP §0.6.1
  * Group 7). It is a Swiper v14 carousel that renders one sibling <ReviewCard>
  * per slide from the shared `src/data/testimonials.js` single source of truth,
- * with arrow navigation, clickable pagination bullets, the Swiper a11y module
- * enabled, and reduced-motion-aware autoplay. It is consumed by the Home
+ * with arrow navigation, clickable pagination bullets, arrow-key keyboard
+ * control (parity with the Gallery carousel), the Swiper a11y module enabled,
+ * and reduced-motion-aware autoplay. It is consumed by the Home
  * testimonials section and the Success Stories page, and it stays fully
  * presentational — the review records are supplied by the caller (defaulting to
  * the shared data) and every slide reuses the canonical <ReviewCard>; this
@@ -108,7 +109,9 @@ import testimonials from '../../data/testimonials.js'
 // STABLE reference across renders (see JSDoc). The Autoplay module is always
 // registered; reduced motion is honoured via the autoplay prop below, not by
 // removing the module (which would create a new array reference and re-init).
-const MODULES = [Navigation, Pagination, A11y, Autoplay]
+// The Keyboard module adds arrow-key slide control for keyboard users (a11y
+// parity with the Gallery carousel); it never moves slides on its own.
+const MODULES = [Navigation, Pagination, A11y, Autoplay, Keyboard]
 
 // The remaining Swiper configuration is fully static, so it is hoisted to module
 // scope (stable references) for the same reason — a re-render of TestimonialSlider
@@ -116,6 +119,17 @@ const MODULES = [Navigation, Pagination, A11y, Autoplay]
 const BREAKPOINTS = { 768: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }
 const PAGINATION = { clickable: true }
 const A11Y = { enabled: true }
+// Keyboard config (WCAG 2.1.1 keyboard operability — parity with the Gallery
+// carousel): Left/Right arrow keys move to the previous/next slide. NOTE:
+// Swiper v14's `onlyInViewport` gate compares the carousel's PAGE-coordinate
+// offset against the window height, so a below-the-fold carousel (which this
+// slider is on both the Home and Success Stories pages) would have its arrow
+// keys silently ignored under `onlyInViewport: true`; `false` therefore keeps
+// arrow-key control working wherever the slider sits on the page. `pageUpDown`
+// is disabled so the module never hijacks the browser's native PageUp/PageDown
+// scrolling. Keyboard navigation is user-initiated, so it stays fully allowed
+// under prefers-reduced-motion (the reduced-motion rule only stops autoplay).
+const KEYBOARD = { enabled: true, onlyInViewport: false, pageUpDown: false }
 // Autoplay config (WCAG 2.2.2 "Pause, Stop, Hide"): `pauseOnMouseEnter` pauses
 // the rotation while a pointer is over the carousel and resumes on leave, which
 // requires `disableOnInteraction: false` so a swipe/arrow does not silently kill
@@ -207,6 +221,7 @@ export default function TestimonialSlider({ items = testimonials, className, ...
         navigation
         pagination={PAGINATION}
         a11y={A11Y}
+        keyboard={KEYBOARD}
         autoplay={reduced ? false : AUTOPLAY}
         breakpoints={BREAKPOINTS}
         className="pb-12"
