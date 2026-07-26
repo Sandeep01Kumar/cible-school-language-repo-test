@@ -85,6 +85,26 @@ const features = [
   },
 ]
 
+// Featured on the Home page: a curated spread across ALL FOUR course categories
+// (English, Science, Computer, Career) so the landing page represents the full
+// catalog rather than a single track. The naive `courses.slice(0, 6)` surfaced
+// five English programs + one Science and omitted Computer and Career entirely.
+// Selected by slug from the canonical `courses` source of truth and preserved in
+// this order; any slug not present is skipped defensively so the grid never
+// renders an undefined tile.
+const FEATURED_COURSE_SLUGS = [
+  'spoken-english', // English — flagship program
+  'english-communication', // English
+  'pcm-coaching', // Science
+  'basic-computer', // Computer
+  'digital-literacy', // Computer
+  'career-guidance', // Career
+]
+
+const featuredCourses = FEATURED_COURSE_SLUGS.map((slug) =>
+  courses.find((course) => course.slug === slug),
+).filter(Boolean)
+
 function Home() {
   return (
     <>
@@ -106,7 +126,7 @@ function Home() {
           subtitle="Explore our most sought-after programs designed to build fluency, confidence and career readiness."
         />
         <div className="mt-10">
-          <CourseGrid items={courses.slice(0, 6)} />
+          <CourseGrid items={featuredCourses} />
         </div>
         <div className="mt-10 flex justify-center">
           <Button to="/courses" variant="outline" size="lg">View all courses</Button>

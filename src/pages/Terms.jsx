@@ -69,7 +69,7 @@ const sections = [
   },
   {
     heading: 'Intellectual Property',
-    body: 'All content on this website, including text, logos, graphics and images, is the property of CIBLE School of Language unless otherwise stated, and may not be reproduced without permission.',
+    body: 'The CIBLE School of Language name, logo, course descriptions and the original written content on this website belong to CIBLE School of Language and may not be reproduced without permission. This website also uses third-party assets under their own licenses — the icon set (react-icons, MIT License), the Inter typeface (SIL Open Font License) and representative illustrations — which remain the property of their respective owners. Rights to any genuine institute photographs added before launch rest with CIBLE School of Language.',
   },
   {
     heading: 'Limitation of Liability',

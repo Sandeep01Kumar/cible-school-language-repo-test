@@ -73,7 +73,7 @@ const values = [
 // Shape { title, description, icon } is consumed by <Timeline> (renders an <ol>).
 const milestones = [
   { icon: FaFlag, title: 'Founded', description: 'CIBLE School of Language opens its doors in Madhubani, Bihar.' },
-  { icon: FaUsers, title: 'Growing Community', description: 'Hundreds of students trained across spoken English and coaching tracks.' },
+  { icon: FaUsers, title: 'Growing Community', description: 'A thriving, ever-growing community of learners across our spoken English and coaching tracks.' },
   { icon: FaAward, title: 'Recognized Results', description: 'A reputation for confident speakers and strong academic outcomes.' },
 ]
 

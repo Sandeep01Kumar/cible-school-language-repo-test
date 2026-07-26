@@ -1,11 +1,13 @@
 /**
  * stats.js — Headline achievement statistics for CIBLE School of Language.
  *
- * NOTE (CLIENT-CONFIRM): The figures below are REPRESENTATIVE, launch-quality
- * placeholders. They MUST be verified and confirmed by the institute before
- * the site goes live (AAP §0.7.2 — authentic institute-supplied metrics are
- * swapped in later). "Courses Offered" (10) intentionally matches the 10
- * courses defined in src/data/courses.js.
+ * NOTE (CLIENT-CONFIRM): "Students Trained" and "Years of Excellence" are
+ * REPRESENTATIVE, launch-quality placeholders that MUST be verified and
+ * confirmed by the institute before the site goes live (AAP §0.7.2 — authentic
+ * institute-supplied metrics are swapped in later). "Expert Faculty" is DERIVED
+ * from the faculty roster (src/data/faculty.js) so the counter can never
+ * contradict the number of profiles actually shown on /faculty, and "Courses
+ * Offered" (10) intentionally matches the 10 courses in src/data/courses.js.
  *
  * Pure ESM data module — exports constants only (no JSX / no React). It is the
  * single source of truth for the animated counter bar and is consumed by
@@ -33,6 +35,10 @@ import {
   FaChalkboardTeacher,
   FaBookOpen,
 } from 'react-icons/fa'
+// Imported so the "Expert Faculty" statistic is derived from the actual roster
+// length (single source of truth) and can never contradict the profiles listed
+// on the Faculty page.
+import { faculty } from './faculty.js'
 
 /**
  * Headline statistics rendered as an animated counter bar.
@@ -60,14 +66,18 @@ export const stats = [
   },
   {
     label: 'Expert Faculty',
-    value: 25,
-    suffix: '+',
+    // Derived from the faculty roster (src/data/faculty.js) so this counter is
+    // always exactly the number of profiles shown on /faculty. No '+' suffix:
+    // it is the EXACT featured-faculty count, not an estimate — this resolves the
+    // prior "25+" vs 6-profiles contradiction (QA F7).
+    value: faculty.length,
     icon: FaChalkboardTeacher,
   },
   {
+    // No '+' suffix here: this figure is EXACT and verifiable — it matches the
+    // 10 courses defined in src/data/courses.js (a '+' would overstate it).
     label: 'Courses Offered',
     value: 10,
-    suffix: '+',
     icon: FaBookOpen,
   },
 ]

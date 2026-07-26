@@ -88,7 +88,7 @@ function SuccessStories() {
           align="left"
           eyebrow="Student Success"
           title="Success Stories"
-          subtitle="Real results from CIBLE students who built confidence, cleared exams and shaped their futures."
+          subtitle="See how CIBLE students build confidence, clear exams and shape their futures."
         />
       </Container>
 

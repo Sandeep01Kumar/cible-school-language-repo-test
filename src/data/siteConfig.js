@@ -4,7 +4,11 @@
 // the forms, and the <Seo> component. Consumers MUST read brand/contact values from
 // here rather than hardcoding them.
 //
-// CLIENT LAUNCH TODO — the following are placeholders and MUST be replaced before launch:
+// CLIENT LAUNCH TODO — the following are authentic, client-supplied assets that this build
+// cannot invent. Per AAP §0.7.2 (genuine institute-supplied media / final details are provided
+// by the client and swapped in later, with any gap flagged) they are intentionally left as clearly
+// marked, syntactically valid placeholders — link semantics are already correct — and MUST be
+// replaced with the real values before launch:
 //   • `siteUrl` uses the placeholder domain https://www.cibleschool.com. Keep it byte-for-byte
 //     identical across index.html canonical, public/sitemap.xml, public/robots.txt, and
 //     src/lib/schema.js.
@@ -53,19 +57,24 @@ export const siteConfig = {
   socialVerified: false,
   representativeContent: true,
   // Google Maps EMBED url for GoogleMap.jsx (iframe src). Query-embed fallback (no API key, iframe-safe).
-  // TODO(client): replace with the precise pinned embed from Google Maps "Share > Embed a map" (https://www.google.com/maps/embed?pb=...).
+  // The query is the most precise text location we can build without a client-supplied pin:
+  // institute name + State Highway 75 (SH75) + the full postal locality, so the pin lands on the
+  // campus rather than a generic village centroid (QA finding I5).
+  // TODO(client): replace with the precise pinned embed from Google Maps "Share > Embed a map" (https://www.google.com/maps/embed?pb=...) once the official listing exists.
   mapEmbedUrl:
-    'https://www.google.com/maps?q=Mukhiapatti%2C%20Saharghat%2C%20Madhubani%2C%20Bihar%20847305&output=embed',
-  // "Open in Google Maps" link (for a button/anchor near the map).
+    'https://www.google.com/maps?q=CIBLE%20School%20of%20Language%2C%20State%20Highway%2075%20(SH75)%2C%20Mukhiapatti%2C%20Saharghat%2C%20Madhubani%2C%20Bihar%20847305&output=embed',
+  // "Open in Google Maps" link (for a button/anchor near the map). Kept in sync with mapEmbedUrl's query.
   mapLink:
-    'https://www.google.com/maps/search/?api=1&query=Mukhiapatti%2C%20Saharghat%2C%20Madhubani%2C%20Bihar%20847305',
+    'https://www.google.com/maps/search/?api=1&query=CIBLE%20School%20of%20Language%2C%20State%20Highway%2075%20(SH75)%2C%20Mukhiapatti%2C%20Saharghat%2C%20Madhubani%2C%20Bihar%20847305',
   // Representative opening hours (client to confirm). Structured for LocalBusiness JSON-LD openingHours.
   hours: [
     { days: 'Monday – Saturday', time: '8:00 AM – 7:00 PM' },
     { days: 'Sunday', time: 'Closed' },
   ],
   social: [
-    // Pliable placeholder handles — TODO(client): confirm/replace with official profile URLs.
+    // Representative placeholder handles — valid absolute https URLs, so the rendered link
+    // semantics are already correct. TODO(client): confirm/replace with the official profile
+    // URLs before launch (AAP §0.7.2, client-supplied).
     { label: 'Facebook', href: 'https://www.facebook.com/cibleschool', icon: FaFacebookF },
     { label: 'Instagram', href: 'https://www.instagram.com/cibleschool', icon: FaInstagram },
     { label: 'YouTube', href: 'https://www.youtube.com/@cibleschool', icon: FaYoutube },

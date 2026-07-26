@@ -94,7 +94,12 @@ const MODULES = [Navigation, Pagination, A11y, Keyboard]
 // must never reset the carousel's active slide.
 const BREAKPOINTS = { 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }
 const PAGINATION = { clickable: true }
-const KEYBOARD = { enabled: true }
+// Arrow-key control for the carousel. `onlyInViewport` MUST be false: Swiper
+// v14's in-viewport gate compares the carousel's PAGE-coordinate offset against
+// the window height, so a carousel below the fold (as on the Gallery page) never
+// passes the check and arrow keys are silently ignored. `pageUpDown` is disabled
+// so the module never hijacks the browser's native PageUp/PageDown scrolling.
+const KEYBOARD = { enabled: true, onlyInViewport: false, pageUpDown: false }
 const A11Y = { enabled: true }
 
 export default function Gallery({ images = [], className, lightbox = true, ...props }) {
