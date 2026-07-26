@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
 import ScrollToTop from './ScrollToTop.jsx'
+import ErrorBoundary from './ErrorBoundary.jsx'
 import FloatingWhatsApp from '../cta/FloatingWhatsApp.jsx'
 import FloatingCall from '../cta/FloatingCall.jsx'
 import StickyBottomCTA from '../cta/StickyBottomCTA.jsx'
@@ -79,12 +80,22 @@ import Spinner from '../ui/Spinner.jsx'
  * `lg`, where the bar is hidden. The offset comes from a SHARED design variable
  * so the shell and the bar stay in lock-step (no per-widget magic numbers).
  *
- * In-shell Suspense boundary: `src/App.jsx` already wraps the routes in an outer
+ * In-shell Suspense + error boundary: `src/App.jsx` wraps the routes in an outer
  * Suspense boundary; this inner boundary around `<Outlet/>` gives a smooth
  * in-shell fallback (the nav + footer stay visible) while a lazy page chunk
  * resolves. The fallback centres the canonical `Spinner` in a `min-h-screen`
  * box (a native token utility — no arbitrary values) so it reads as a page-level
- * loader rather than a tiny glyph.
+ * loader rather than a tiny glyph. The `<Outlet/>` is additionally wrapped in an
+ * `ErrorBoundary` keyed by pathname (M18), so a rejected/stale page chunk or a
+ * page render error surfaces an accessible recovery UI inside the shell and
+ * resets on the next navigation.
+ *
+ * Committed-route binding (m01): `src/App.jsx` drives a controlled
+ * `<Routes location={displayLocation}>`, so `useLocation()` here returns the
+ * location currently COMMITTED to the screen. The route-change focus move, the
+ * polite title announcement and `<ScrollToTop/>` therefore fire when the new
+ * page actually renders — never mid-transition while the previous page is still
+ * visible.
  *
  * Accessibility (WCAG AA):
  *   • The `.skip-link` (global class from src/index.css — hidden off-screen
@@ -178,7 +189,16 @@ function Layout() {
             </div>
           }
         >
-          <Outlet />
+          {/* Route render-error safety net (M18): a rejected/stale page chunk
+              (after `lazyWithRetry` exhausts its retry + one-time reload) or a
+              runtime error thrown while a page renders is caught HERE — inside
+              the shell — so Navbar, Footer and the conversion widgets stay
+              mounted and the visitor can recover or navigate away. Keyed by the
+              committed `pathname`, so the boundary resets on every navigation
+              and leaving a broken route automatically clears the error. */}
+          <ErrorBoundary key={pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </Suspense>
       </main>
 

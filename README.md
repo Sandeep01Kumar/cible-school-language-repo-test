@@ -17,20 +17,28 @@ student admissions and inquiries.
 - [Pages](#pages)
 - [Contact & Brand](#contact--brand)
 - [Accessibility & SEO](#accessibility--seo)
+- [Deployment & Hosting](#deployment--hosting)
+- [Security](#security)
+- [Limitations](#limitations)
 - [License & Notes](#license--notes)
 
 ## Tech Stack
 
-The project is built entirely on the client with a modern React toolchain. Exact
-dependency versions are pinned in [`package.json`](./package.json), which is the
-source of truth.
+The project is built entirely on the client with a modern React toolchain. All
+dependency versions are declared as caret (`^`) ranges in
+[`package.json`](./package.json) and locked in `package-lock.json`, which together
+are the source of truth. The major versions below reflect what is actually declared
+and installed; patch/minor levels may float within each caret range.
 
-- **React 19 + Vite** — modern ESM React SPA with fast HMR in development and an
-  optimized production build.
-- **React Router** — client-side routing across 17 content pages plus a 404
-  *Not Found* route.
+- **React 19 + Vite 8** — a modern ESM React SPA with fast HMR in development and an
+  optimized production build. Vite 8 uses the Rolldown bundler under the hood.
+- **React Router v7 (`react-router-dom`)** — client-side routing across 17 content
+  pages plus a catch-all 404 *Not Found* route, configured declaratively with
+  `<BrowserRouter>` (no server/data-router or React Server Components mode; see
+  [Security](#security)).
 - **Tailwind CSS v4** — CSS-first design system wired through the
-  `@tailwindcss/vite` plugin. The brand palette is blue (primary), orange
+  `@tailwindcss/vite` plugin (no `tailwind.config.js`; tokens are defined in an
+  `@theme` block in `src/index.css`). The brand palette is blue (primary), orange
   (secondary), and green (accent) on a white background, built on an 8px spacing
   scale with rounded cards and soft shadows.
 - **react-helmet-async** — per-page SEO head management (title, description,
@@ -50,7 +58,9 @@ source of truth.
 
 ### Prerequisites
 
-- **Node.js** (current LTS release) and **npm**.
+- **Node.js** and **npm**. Vite 8 requires Node.js **20.19+** or **22.12+**
+  (the project is developed and validated on Node 22.x). No other global tooling is
+  required — all dependencies install locally into `node_modules`.
 
 ### Install & run
 
@@ -81,6 +91,10 @@ Each command below maps directly to a script defined in `package.json`.
 | `npm run build`   | `vite build`       | Produce an optimized production build in `dist/`         |
 | `npm run preview` | `vite preview`     | Serve and preview the production build locally           |
 | `npm run lint`    | `oxlint`           | Run the Oxlint quality gate                              |
+
+> There is **no `test` script and no automated test suite** in this repository
+> (`npm test` is not defined). Quality is gated by `npm run lint` (Oxlint) and a
+> clean `npm run build`. See [Limitations](#limitations).
 
 ## Project Structure
 
@@ -124,8 +138,11 @@ sticky CTA bar):
 5. **Science Coaching** — PCM and PCB coaching for science students.
 6. **Computer Courses** — Basic Computer, Digital Literacy, and related programs.
 7. **Faculty** — faculty profiles and expertise.
-8. **Gallery** — a photo gallery of the institute and its activities.
-9. **Success Stories** — student results and testimonials.
+8. **Gallery** — a visual gallery built from on-brand **representative
+   illustrations** (not photographs of the actual institute yet — see
+   [Limitations](#limitations)).
+9. **Success Stories** — **representative** student testimonials and outcomes shown
+   for demonstration; these are not verified student records.
 10. **Blog** — articles, learning tips, and updates.
 11. **Events** — upcoming events, workshops, and seminars.
 12. **Admission** — the admission form and enrollment process.
@@ -164,16 +181,107 @@ AA-contrast color pairings across the blue / orange / green palette on white. Fo
 discoverability, every page emits a unique meta title and description together with
 Open Graph and Twitter card metadata, and injects JSON-LD structured data
 (**Organization**, **LocalBusiness**, **Course**, and **Breadcrumb**). Static
-`public/robots.txt` and `public/sitemap.xml` files complete the SEO surface.
+`public/robots.txt` and `public/sitemap.xml` files complete the SEO surface. All of
+this metadata is set **client-side** (via `react-helmet-async` and runtime JSON-LD
+injection); see [Deployment & Hosting](#deployment--hosting) for how this affects
+crawlers that do not execute JavaScript.
+
+## Deployment & Hosting
+
+This is a **client-rendered single-page application (SPA)**. `npm run build` emits a
+static bundle to `dist/` (an `index.html` shell plus hashed JS/CSS/asset files) that
+can be served by any static host or CDN. Two hosting characteristics follow directly
+from the client-only architecture and **must be understood/configured at deploy time**:
+
+- **History fallback / rewrite rule (required).** Routing is handled in the browser by
+  React Router's `<BrowserRouter>`, which uses the HTML5 History API. The host must be
+  configured to **rewrite all unmatched request paths to `/index.html`** so that deep
+  links and hard refreshes on routes such as `/courses` or `/contact` load the app
+  instead of returning the host's own 404. Typical configuration:
+  - Netlify: a `/* /index.html 200` redirect (e.g. in `netlify.toml` or `_redirects`).
+  - Vercel: a catch-all rewrite to `/index.html`.
+  - Nginx: `try_files $uri /index.html;`.
+  - Apache: a `mod_rewrite` fallback to `index.html`.
+
+  Without this rewrite, only the root `/` path will load reliably.
+
+- **Soft-404 (no true HTTP 404 status).** Because the same `index.html` is served for
+  every path, unmatched routes render the in-app **NotFound** page but the HTTP
+  response status is still **200**, not a real `404` — a *soft* 404. To keep these
+  pages out of the index, `NotFound` emits
+  `<meta name="robots" content="noindex, follow">`. A genuine `404` status for unknown
+  paths would require server-side logic or host configuration that this static SPA does
+  not provide.
+
+- **No server-side rendering or prerendering.** The app is **client-rendered only**.
+  The shipped `index.html` contains an empty `#root` element hydrated by JavaScript at
+  runtime; there is no SSR, SSG, or build-time prerendering. Crawlers that execute
+  JavaScript see the fully rendered content plus the per-page `react-helmet-async`
+  metadata and JSON-LD; crawlers that do **not** execute JavaScript see only the static
+  defaults in `index.html`. Adding no-JS SEO or social-preview crawling would require a
+  prerender/SSR layer (out of scope for this build).
+
+## Security
+
+- **Dependency advisories (`react-router-dom`).** The project pins `react-router-dom`
+  at the latest published v7 (`^7.18.1`), the most secure version available for a
+  **declarative client SPA**: it resolves the client-relevant advisories
+  (open-redirect / XSS classes) that affect older 7.x releases. One residual advisory,
+  **GHSA-qwww-vcr4-c8h2** — a CSRF issue in React Router's **React Server Components /
+  server-action** mode — has no published version that fixes it without regressing to a
+  release that reintroduces the worse client-side advisories. It is **not reachable in
+  this application**, which uses only declarative `<BrowserRouter>` routing with no RSC,
+  no server actions, and no data-router loaders/actions. It is therefore documented as
+  an accepted, non-exploitable ecosystem constraint rather than a code defect;
+  re-evaluate when a fixed React Router release is published.
+- **Structured-data serialization.** JSON-LD injected into `<script>` tags via Helmet
+  is validated (plain objects only) and escaped (`<` → `\u003c`, `>` → `\u003e`,
+  `&` → `\u0026`, and U+2028/U+2029) to prevent script-context breakout (CWE-79).
+- **Form handoff.** Forms do not post to any server (see [Limitations](#limitations));
+  they open a WhatsApp or email **draft** on the user's device. The user's details are
+  only transmitted if they choose to send that draft, and each form discloses this
+  third-party handoff adjacent to the submit action and links to the Privacy Policy.
+
+## Limitations
+
+This repository is a front-end website. The following are **intentionally not part of
+this build** and are documented so integrators are not surprised:
+
+- **No backend, API, or database.** There is no server component and no persistent data
+  store. Admission, Contact, and Newsletter forms perform a **client-side handoff** by
+  opening a prefilled WhatsApp chat (`https://wa.me/…`) or a `mailto:` email draft;
+  nothing is submitted to or stored on a server, and the UI states say so truthfully
+  ("draft opened — not yet sent").
+- **No automated tests.** There is no unit/integration/e2e test suite and no `test`
+  script; the gates are `npm run lint` (Oxlint) and a clean `npm run build`.
+- **No offline / service worker.** `site.webmanifest` supplies installability metadata
+  (name, icons, theme color) only. There is **no service worker**, so the app does not
+  work offline and does not cache beyond normal browser HTTP caching.
+- **No prerender / SSR and no true HTTP-404.** See
+  [Deployment & Hosting](#deployment--hosting).
+- **iOS safe-area not verified on hardware.** `viewport-fit=cover` plus
+  `env(safe-area-inset-*)` padding is implemented for the fixed mobile CTA, but it has
+  not been verified on a physical notched iOS device or the iOS Simulator in this
+  environment; verify on representative iOS hardware before launch.
+- **Representative content and assets.** See [License & Notes](#license--notes).
 
 ## License & Notes
 
 - Some imagery and editorial copy in this repository are **representative
   placeholders** intended to be replaced with genuine, institute-supplied assets
   (real photographs, verified faculty biographies, and actual student records)
-  before launch.
-- The domain `https://www.cibleschool.com` is used as a **placeholder** throughout
-  the SEO metadata and structured data and should be swapped for the final
-  production domain at launch.
+  before launch. This is disclosed **visibly in the running app** — a site-wide
+  "Demo content notice" band in the footer, plus point-of-claim notices on the
+  Faculty, Success Stories, About, Career, Events, Blog, and Courses pages — and is
+  gated by the `representativeContent` flag in `src/data/siteConfig.js` (set it to
+  `false` once the content is client-verified to retire every notice at once).
+- **Unverified social profiles are hidden by default.** Social links and the
+  `sameAs` entries in the JSON-LD are gated behind `socialVerified` in
+  `src/data/siteConfig.js` (currently `false`), so no unconfirmed identity is
+  published; enable it once the official profile URLs are verified.
+- The domain `https://www.cibleschool.com`, the map location/hours, and the contact
+  details are **representative** and drive the SEO metadata, structured data,
+  `sitemap.xml`, and `robots.txt`; swap them for the final, verified production
+  values at launch.
 - This is a private project (`"private": true` in `package.json`) developed for
   CIBLE School of Language.

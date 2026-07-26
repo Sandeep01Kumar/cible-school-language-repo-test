@@ -14,7 +14,14 @@ import logoWhite from '../../assets/logo-white.svg'
  * plus the 404 view, and reinforces the conversion-first goal: brand + tagline,
  * grouped navigation (Quick Links / Courses / Legal), a click-to-contact block
  * (phone, email, address, map), the reusable newsletter subscribe form, social
- * profiles, and a copyright bar.
+ * profiles (shown only once client-verified — see below), and a copyright bar.
+ *
+ * Trust & transparency (M02 / M03): social links are gated behind
+ * `siteConfig.socialVerified` so unverified handles are never published as
+ * official, and a slim `siteConfig.representativeContent` disclosure band
+ * visibly marks the site as a non-production demo on every page while it runs
+ * on representative sample content. Both disappear automatically once the
+ * client supplies verified accounts/content and clears the flags.
  *
  * Reuse-first composition (AAP rule: never duplicate primitives): it composes
  * the canonical `ui/Container` for width/gutters and the canonical
@@ -44,8 +51,11 @@ import logoWhite from '../../assets/logo-white.svg'
  *   `<address class="not-italic">` for contact.
  * - Contact actions are real deep-links (`tel:` / `mailto:` from siteConfig);
  *   the map and social links open in a new tab with `rel="noopener noreferrer"`.
- * - Social links expose a descriptive `aria-label` (from the data `label`) and
- *   their glyphs are `aria-hidden`; the logo `<img>` has a meaningful `alt`.
+ * - Social links (when shown) expose a descriptive `aria-label` (from the data
+ *   `label`) and their glyphs are `aria-hidden`; the logo `<img>` has a
+ *   meaningful `alt`.
+ * - Every interactive control (contact deep-links, column nav links, social
+ *   icons, footer legal links) meets the 44×44px minimum touch target (M12).
  * - The global `:focus-visible` ring (src/index.css) is left intact.
  *
  * Mobile clearance: the bottom bar uses `pb-20` (80px) on mobile, relaxing to
@@ -80,16 +90,18 @@ function Footer({ className }) {
           <p className="text-sm text-primary-100">{siteConfig.tagline}</p>
 
           <address className="not-italic flex flex-col gap-2 text-sm text-primary-100">
+            {/* Contact deep-links carry a 44px min hit area (M12); the address
+                span is not interactive so it keeps its natural height. */}
             <a
               href={siteConfig.phoneHref}
-              className="inline-flex items-center gap-2 hover:text-white"
+              className="inline-flex min-h-11 items-center gap-2 hover:text-white"
             >
               <FaPhoneAlt aria-hidden="true" className="h-4 w-4 shrink-0" />
               {siteConfig.phone}
             </a>
             <a
               href={siteConfig.emailHref}
-              className="inline-flex items-center gap-2 hover:text-white"
+              className="inline-flex min-h-11 items-center gap-2 hover:text-white"
             >
               <FaEnvelope aria-hidden="true" className="h-4 w-4 shrink-0" />
               {siteConfig.email}
@@ -102,31 +114,39 @@ function Footer({ className }) {
               href={siteConfig.mapLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 font-medium text-white underline-offset-4 hover:underline"
+              className="inline-flex min-h-11 items-center gap-2 font-medium text-white underline-offset-4 hover:underline"
             >
               View on Google Maps
             </a>
           </address>
 
-          {/* Social profiles — descriptive aria-label per link, glyphs hidden */}
-          <ul className="flex items-center gap-3 pt-2">
-            {siteConfig.social.map((s) => {
-              const Icon = s.icon
-              return (
-                <li key={s.label}>
-                  <a
-                    href={s.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={s.label}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-                  >
-                    {Icon ? <Icon aria-hidden="true" className="h-4 w-4" /> : null}
-                  </a>
-                </li>
-              )
-            })}
-          </ul>
+          {/* Social profiles (M02): rendered ONLY when the accounts have been
+              client-verified (`siteConfig.socialVerified`). The scaffold ships
+              representative, unverified handles, so this "fails closed" — the
+              links stay hidden until real, owned profiles are confirmed, rather
+              than publishing unverified URLs as official links. Each control is a
+              44×44 touch target (M12) with a descriptive aria-label; the glyph
+              is decorative (`aria-hidden`). */}
+          {siteConfig.socialVerified ? (
+            <ul className="flex items-center gap-2 pt-2">
+              {siteConfig.social.map((s) => {
+                const Icon = s.icon
+                return (
+                  <li key={s.label}>
+                    <a
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={s.label}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                    >
+                      {Icon ? <Icon aria-hidden="true" className="h-4 w-4" /> : null}
+                    </a>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : null}
         </div>
 
         {/* Grouped navigation — one labelled <nav> per footerNav column */}
@@ -141,7 +161,7 @@ function Footer({ className }) {
                   <li key={link.path}>
                     <Link
                       to={link.path}
-                      className="text-sm text-primary-100 transition-colors hover:text-white"
+                      className="inline-flex min-h-11 items-center text-sm text-primary-100 transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -158,6 +178,31 @@ function Footer({ className }) {
         <Newsletter className="lg:col-span-3" />
       </Container>
 
+      {/* Representative-content disclosure (M02 / M03, AAP §0.7.2): while the
+          site runs on representative sample content — faculty, testimonials,
+          success stories, statistics, events, blog posts and opening hours
+          authored for demonstration rather than supplied and verified by the
+          institute — it
+          is visibly gated as a non-production demo on every page (the footer is
+          part of the persistent Layout). Driven by the single
+          `siteConfig.representativeContent` flag so it disappears the moment
+          real, client-approved content is provided and the flag is cleared.
+          Deliberately restrained (a slim muted band) to disclose honestly
+          without breaking the premium feel. */}
+      {siteConfig.representativeContent ? (
+        <div className="border-t border-white/10 bg-black/20">
+          <Container className="py-4">
+            <p className="text-center text-xs leading-relaxed text-primary-100">
+              <span className="font-semibold text-white">Demo content notice:</span>{' '}
+              Faculty profiles, testimonials, success stories, statistics, events,
+              blog posts and opening hours shown here are representative samples
+              for demonstration and will be replaced with verified, client-approved
+              information before launch.
+            </p>
+          </Container>
+        </div>
+      ) : null}
+
       {/* Bottom bar — copyright + inline legal links. `pb-20 lg:pb-8` keeps the
           copy clear of the mobile-only fixed StickyBottomCTA bar. */}
       <div className="border-t border-white/10">
@@ -166,10 +211,13 @@ function Footer({ className }) {
             © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
-            <Link to="/privacy-policy" className="hover:text-white">
+            <Link
+              to="/privacy-policy"
+              className="inline-flex min-h-11 items-center hover:text-white"
+            >
               Privacy Policy
             </Link>
-            <Link to="/terms" className="hover:text-white">
+            <Link to="/terms" className="inline-flex min-h-11 items-center hover:text-white">
               Terms
             </Link>
           </div>

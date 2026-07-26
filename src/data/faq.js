@@ -1,8 +1,8 @@
 /**
  * CIBLE School of Language — Frequently Asked Questions (FAQ) data.
  *
- * Pure ESM data module: no imports, no JSX, constants only. It is the single
- * source of truth for FAQ content and is consumed by:
+ * ESM data module (no JSX, constants only). It is the single source of truth
+ * for FAQ content and is consumed by:
  *   - src/components/common/FAQ.jsx  (renders an accessible Accordion)
  *   - src/pages/Faq.jsx              (may group items by `category`)
  *   - src/lib/schema.js              (optional FAQPage JSON-LD structured data)
@@ -21,10 +21,20 @@
  * asserting unconfirmed specifics as fact and instead direct users to call,
  * WhatsApp, or visit for the most current information. The free counseling
  * session is an intentional, standing admissions call-to-action (AAP §0.1.1).
- * Contact details (phone, email, exact address) live in src/data/siteConfig.js
- * and are surfaced by components — only the city/location is referenced in this
- * prose.
+ * Contact details (phone, email, exact street address) live ONLY in
+ * src/data/siteConfig.js and are surfaced by components. To keep a single
+ * source of truth (no duplicated location facts), the location-related answers
+ * below derive the city and region from `siteConfig.addressParts` rather than
+ * repeating them as literals, and defer the precise street address to the
+ * Contact page / components.
  */
+
+import { siteConfig } from './siteConfig.js'
+
+// City and region derived from the single source of truth so location prose
+// never duplicates (and cannot drift from) the address in siteConfig.
+const { addressLocality, addressRegion } = siteConfig.addressParts
+const cityRegion = `${addressLocality}, ${addressRegion}`
 
 export const faq = [
   {
@@ -60,7 +70,7 @@ export const faq = [
   {
     question: 'Where is CIBLE located and how do I reach the institute?',
     answer:
-      'We are located on State Highway 75 (SH75), Mukhiapatti, Saharghat, in Madhubani, Bihar. You are always welcome to visit us in person — call or WhatsApp ahead and we will help you plan your visit and find us easily.',
+      `We are located in ${cityRegion}. You are always welcome to visit us in person — you can find our full street address and directions on the Contact page, or call or WhatsApp ahead and we will help you plan your visit and find us easily.`,
     category: 'General',
   },
   {
@@ -84,7 +94,7 @@ export const faq = [
   {
     question: 'How can I contact CIBLE or visit the institute?',
     answer:
-      'You can reach us by phone or WhatsApp, or simply visit us in Madhubani, Bihar. Have a question or ready to begin? Call or WhatsApp us to book your free counseling session — we are always happy to help you take the first step toward a brighter future.',
+      `You can reach us by phone or WhatsApp, or simply visit us in ${cityRegion}. Have a question or ready to begin? Call or WhatsApp us to book your free counseling session — we are always happy to help you take the first step toward a brighter future.`,
     category: 'General',
   },
 ]

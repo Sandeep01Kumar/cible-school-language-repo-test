@@ -1,56 +1,78 @@
-import { lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { useEffect, useState, useTransition, Suspense } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { MotionConfig } from 'framer-motion'
 import Layout from './components/layout/Layout.jsx'
+import RouteProgress from './components/layout/RouteProgress.jsx'
 import Spinner from './components/ui/Spinner.jsx'
+import { lazyWithRetry } from './lib/routeLoading.js'
 
 /*
  * Route-level code splitting (AAP performance rule): every page below is loaded
- * with `React.lazy`, so each route resolves to its OWN async chunk and the
- * initial bundle stays minimal. Only the always-present shell (`Layout`) and
- * the tiny loading `Spinner` are imported eagerly (above). The consts are
- * module-local — the file's single component (`App`) is the only export, which
- * keeps the enforced `react/only-export-components` lint rule green.
+ * with `lazyWithRetry` (a hardened `React.lazy` — see src/lib/routeLoading.js),
+ * so each route resolves to its OWN async chunk AND a failed or stale chunk
+ * import is retried then recovered rather than hard-crashing the app (M18).
+ * Only the always-present shell (`Layout`), the pending-navigation
+ * `RouteProgress` and the tiny loading `Spinner` are imported eagerly (above).
+ * The consts are module-local — the file's single component (`App`) is the only
+ * export, which keeps the enforced `react/only-export-components` rule green.
  */
-const Home = lazy(() => import('./pages/Home.jsx'))
-const About = lazy(() => import('./pages/About.jsx'))
-const Courses = lazy(() => import('./pages/Courses.jsx'))
-const SpokenEnglish = lazy(() => import('./pages/SpokenEnglish.jsx'))
-const ScienceCoaching = lazy(() => import('./pages/ScienceCoaching.jsx'))
-const ComputerCourses = lazy(() => import('./pages/ComputerCourses.jsx'))
-const Faculty = lazy(() => import('./pages/Faculty.jsx'))
-const Gallery = lazy(() => import('./pages/Gallery.jsx'))
-const SuccessStories = lazy(() => import('./pages/SuccessStories.jsx'))
-const Blog = lazy(() => import('./pages/Blog.jsx'))
-const Events = lazy(() => import('./pages/Events.jsx'))
-const Admission = lazy(() => import('./pages/Admission.jsx'))
-const Career = lazy(() => import('./pages/Career.jsx'))
-const Faq = lazy(() => import('./pages/Faq.jsx'))
-const Contact = lazy(() => import('./pages/Contact.jsx'))
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy.jsx'))
-const Terms = lazy(() => import('./pages/Terms.jsx'))
-const NotFound = lazy(() => import('./pages/NotFound.jsx'))
+const Home = lazyWithRetry(() => import('./pages/Home.jsx'))
+const About = lazyWithRetry(() => import('./pages/About.jsx'))
+const Courses = lazyWithRetry(() => import('./pages/Courses.jsx'))
+const SpokenEnglish = lazyWithRetry(() => import('./pages/SpokenEnglish.jsx'))
+const ScienceCoaching = lazyWithRetry(() => import('./pages/ScienceCoaching.jsx'))
+const ComputerCourses = lazyWithRetry(() => import('./pages/ComputerCourses.jsx'))
+const Faculty = lazyWithRetry(() => import('./pages/Faculty.jsx'))
+const Gallery = lazyWithRetry(() => import('./pages/Gallery.jsx'))
+const SuccessStories = lazyWithRetry(() => import('./pages/SuccessStories.jsx'))
+const Blog = lazyWithRetry(() => import('./pages/Blog.jsx'))
+const Events = lazyWithRetry(() => import('./pages/Events.jsx'))
+const Admission = lazyWithRetry(() => import('./pages/Admission.jsx'))
+const Career = lazyWithRetry(() => import('./pages/Career.jsx'))
+const Faq = lazyWithRetry(() => import('./pages/Faq.jsx'))
+const Contact = lazyWithRetry(() => import('./pages/Contact.jsx'))
+const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy.jsx'))
+const Terms = lazyWithRetry(() => import('./pages/Terms.jsx'))
+const NotFound = lazyWithRetry(() => import('./pages/NotFound.jsx'))
 
 /**
  * App — the client-side route table for the CIBLE School of Language SPA
- * (AAP §0.5.1 / §0.6.1 Group 2). This component intentionally owns ONLY routing:
- * the `<BrowserRouter>` and `<HelmetProvider>` live one level up in
- * `src/main.jsx`, so App must never create another router or head-manager
- * context — it simply declares the `<Routes>` those providers drive.
+ * (AAP §0.5.1 / §0.6.1 Group 2). This component owns ONLY routing: the
+ * `<BrowserRouter>` and `<HelmetProvider>` live one level up in `src/main.jsx`,
+ * so App must never create another router or head-manager context — it simply
+ * declares the `<Routes>` those providers drive.
  *
- * The single top-level `<Suspense>` boundary renders the `Spinner` fallback
- * while a lazily-loaded page chunk is in flight (Layout additionally provides
- * an in-shell Suspense boundary around its `<Outlet/>`, so the nav + footer
- * stay visible during subsequent navigations).
+ * Pending-navigation feedback (M18 / m01) — controlled-location transition:
+ * `react-router` wraps navigations in a React transition, so clicking a link to
+ * an un-cached page changes the URL immediately but keeps the OLD page visible
+ * (no Suspense fallback flash) until the new chunk loads — which previously left
+ * the visitor with no pending signal. App therefore renders a CONTROLLED
+ * `<Routes location={displayLocation}>`: `location` is the live router location
+ * (updates the instant a link is clicked) while `displayLocation` is the
+ * location currently committed to the screen. Each change advances
+ * `displayLocation` inside `startTransition`, so `isPending` is true for exactly
+ * the window between "navigation started" and "new page committed". That drives
+ * `<RouteProgress>` (a visible top bar + a polite "Loading page…" announcement),
+ * and because child components read `displayLocation` via `useLocation`, the
+ * `Layout` page-title announcement and `ScrollToTop` fire on the COMMITTED route
+ * (m01), never mid-transition.
+ *
+ * Resilience (M18): pages load through `lazyWithRetry`, and `Layout` wraps the
+ * routed `<Outlet/>` in an `ErrorBoundary`, so a rejected/stale chunk or a page
+ * render error is retried, reloaded once, or shown as an accessible recovery UI
+ * with the shell (nav/footer/quick-contact) still intact — never a blank crash.
+ *
+ * The single top-level `<Suspense>` renders the `Spinner` fallback for the very
+ * first page load (Layout additionally wraps its `<Outlet/>` in an in-shell
+ * Suspense boundary so the nav + footer stay visible during subsequent loads).
  *
  * Motion policy: a `<MotionConfig reducedMotion="user">` wraps the whole route
- * tree so every framer-motion element site-wide honors the user's
- * prefers-reduced-motion setting (AAP §0.6.3 / WCAG 2.3.3).
+ * tree so every framer-motion element honors prefers-reduced-motion (WCAG 2.3.3).
  *
  * Shared shell: a pathless parent `<Route element={<Layout/>}>` wraps every
  * page, so the persistent Navbar, Footer, floating Call/WhatsApp widgets and
- * mobile sticky CTA are mounted once and never unmount between navigations —
- * keeping the primary admissions actions reachable on every page.
+ * mobile sticky CTA mount once and never unmount between navigations — keeping
+ * the primary admissions actions reachable on every page.
  *
  * Canonical routes (MUST stay in lock-step with `src/data/navigation.js` and
  * `public/sitemap.xml` — a mismatch breaks nav links and the sitemap):
@@ -66,20 +88,40 @@ const NotFound = lazy(() => import('./pages/NotFound.jsx'))
  *   mounted by `src/main.jsx` inside the router + head-manager providers.
  */
 function App() {
+  // Controlled-location transition state (see JSDoc). All hooks are declared
+  // unconditionally at the top level (oxlint `react/rules-of-hooks`).
+  const location = useLocation()
+  const [displayLocation, setDisplayLocation] = useState(location)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    // Advance the displayed location only when the URL actually changed
+    // (compare by history key, stable per entry). Wrapping the update in a
+    // transition keeps the previous page on screen while the next chunk loads
+    // and exposes `isPending` for the RouteProgress indicator. Setting
+    // displayLocation to the new location makes this a no-op on the next run.
+    if (location.key === displayLocation.key) return
+    startTransition(() => setDisplayLocation(location))
+  }, [location, displayLocation])
+
   return (
     <Suspense fallback={<Spinner />}>
+      {/* Pending-navigation indicator (visible bar + polite announcement). */}
+      <RouteProgress active={isPending} />
+
       {/*
-       * Global reduced-motion contract (AAP §0.6.3 "respecting
-       * prefers-reduced-motion" / WCAG 2.3.3). `reducedMotion="user"` makes
-       * EVERY framer-motion element in the tree honor the OS/browser
-       * "reduce motion" setting: transform and layout animations are disabled
-       * for those users. Individual components additionally gate their enter
-       * animation with `initial={reduce ? false : 'hidden'}` so reveals mount
-       * directly at their final state — this MotionConfig is the site-wide
-       * safety net that also covers any motion element without a local gate.
+       * Global reduced-motion contract (AAP §0.6.3 / WCAG 2.3.3).
+       * `reducedMotion="user"` makes EVERY framer-motion element in the tree
+       * honor the OS/browser "reduce motion" setting: transform and layout
+       * animations are disabled for those users. Individual components also gate
+       * their enter animation with `initial={reduce ? false : 'hidden'}`; this
+       * MotionConfig is the site-wide safety net for any element without a local
+       * gate.
        */}
       <MotionConfig reducedMotion="user">
-        <Routes>
+        {/* Controlled location: routes match the COMMITTED displayLocation, so
+            the visible page changes only once its chunk has resolved (m01). */}
+        <Routes location={displayLocation}>
           <Route element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />

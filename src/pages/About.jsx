@@ -47,6 +47,7 @@ import Statistics from '../components/common/Statistics.jsx'
 import Timeline from '../components/common/Timeline.jsx'
 import FeatureCard from '../components/common/FeatureCard.jsx'
 import FacultyCard from '../components/common/FacultyCard.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import { faculty } from '../data/faculty.js'
 import { siteConfig } from '../data/siteConfig.js'
@@ -121,6 +122,11 @@ function About() {
       <section className="bg-surface py-16 md:py-20">
         <Container>
           <SectionHeading eyebrow="Our Journey" title="Milestones" />
+          <RepresentativeNote className="mt-8">
+            This journey and its milestones are a representative illustration of
+            the institute's story, not a verified historical record. Genuine
+            history and dates will be confirmed before launch.
+          </RepresentativeNote>
           <div className="mt-10">
             <Timeline items={milestones} />
           </div>

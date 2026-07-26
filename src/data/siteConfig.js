@@ -39,6 +39,19 @@ export const siteConfig = {
   // MUST stay identical to: index.html canonical, public/sitemap.xml, public/robots.txt, and src/lib/schema.js.
   siteUrl: 'https://www.cibleschool.com',
   ogImage: '/og-image.jpg',            // matches index.html og:image + public/og-image.jpg (Seo builds absolute = siteUrl + ogImage)
+  // Dedicated brand logo (distinct from the OG marketing image). Served from public/logo.svg and
+  // emitted as the schema.org Organization `logo` (src/lib/schema.js) and usable by UI/manifest.
+  logo: '/logo.svg',
+  // Verification / launch-readiness flags (AAP §0.7.2 — representative content is in scope; genuine
+  // ownership/records are client-supplied launch blockers and must NOT be asserted as verified fact):
+  //   • socialVerified — when false, src/lib/schema.js OMITS the social `sameAs` block so no
+  //     unverified profile is published as the institute's machine-readable identity. Flip to true
+  //     only after the client confirms ownership of every URL in `social` below.
+  //   • representativeContent — when true, the UI surfaces a tasteful, site-wide "representative
+  //     content pending verification" disclosure (see Footer) so demo copy/data is never presented
+  //     as verified fact. Set to false once all public-facing content is client-confirmed.
+  socialVerified: false,
+  representativeContent: true,
   // Google Maps EMBED url for GoogleMap.jsx (iframe src). Query-embed fallback (no API key, iframe-safe).
   // TODO(client): replace with the precise pinned embed from Google Maps "Share > Embed a map" (https://www.google.com/maps/embed?pb=...).
   mapEmbedUrl:

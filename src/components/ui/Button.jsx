@@ -11,12 +11,16 @@ import { cn } from '../../lib/cn.js'
  *
  * Polymorphic rendering (precedence: `to` > `href` > native `<button>`):
  *   • `to`   → a react-router <Link> for internal SPA navigation (client-side).
- *   • `href` → a semantic <a>. External http(s) URLs (including the WhatsApp
- *              deep link https://wa.me/919899315093) open in a new tab with
- *              rel="noopener noreferrer". Non-http schemes such as
- *              tel:+919899315093 and mailto: are treated as in-place navigation
- *              (no target="_blank") so the device dialer / mail client opens
- *              directly.
+ *   • `href` → a semantic <a>, gated by a strict protocol allowlist
+ *              (sanitizeHref): only http(s), tel:, mailto:, and scheme-less
+ *              relative references are honoured. External http(s) URLs
+ *              (including the WhatsApp deep link https://wa.me/919899315093)
+ *              open in a new tab with rel="noopener noreferrer"; tel:
+ *              (+919899315093) and mailto: open in place so the device dialer /
+ *              mail client launches directly. A disallowed scheme
+ *              (javascript:, data:, …) is rejected and the control degrades to
+ *              a non-navigating <button>. href and the security props are
+ *              enforced AFTER caller props, so they cannot be overridden.
  *   • otherwise → a semantic <button> with an explicit `type` (default
  *              'button') and native `disabled` support.
  *
@@ -28,8 +32,10 @@ import { cn } from '../../lib/cn.js'
  * `outline` variant renders primary-600 text on a transparent surface with a
  * primary-50 hover tint. (secondary-600 = #ea580c is only ~3.56:1 under white
  * text and fails AA, so the secondary fill starts at -700 = #c2410c ≈ 5.18:1.)
- * Sizes sit on the 8px scale — md (44px) and lg (48px)
- * meet the WCAG touch-target guideline; sm (36px) is for compact contexts.
+ * Sizes sit on the 8px scale and EVERY size is at least 44px tall — sm/md
+ * (44px) and lg (48px) — plus a `min-w-11` floor on the shared base, so all
+ * renderings (including icon-only) meet the WCAG 2.5.5/2.5.8 touch-target
+ * guideline. `sm` is "compact" only in padding/text, never in hit area.
  *
  * Accessibility: a semantic element is rendered for every usage (never a
  * clickable <div>); a visible :focus-visible ring is exposed on all three
@@ -53,8 +59,11 @@ import { cn } from '../../lib/cn.js'
 // Shared, always-applied classes: layout, shape, typography, motion, the
 // keyboard focus ring, and the disabled treatment. Module-local (not exported)
 // so the file exposes only the Button component (react/only-export-components).
+// `min-h-11 min-w-11` guarantees a ≥44×44px hit area on EVERY rendering
+// (including icon-only buttons and the compact `sm` size), satisfying the WCAG
+// 2.5.5 / 2.5.8 touch-target guideline for the canonical control.
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+  'inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
 
 // Variant fills — locked to AA-compliant shades (see the WCAG note above and
 // the guidance block in src/index.css). Do NOT substitute lighter shades
@@ -68,11 +77,45 @@ const variants = {
   outline: 'border-2 border-primary-600 bg-transparent text-primary-600 hover:bg-primary-50',
 }
 
-// Size steps on the 8px scale. md/lg satisfy the 44px touch-target guideline.
+// Size steps on the 8px scale. ALL sizes are ≥44px tall (h-11 = 44px, h-12 =
+// 48px) so every size meets the WCAG touch-target guideline; `sm` is the
+// "compact" step — same 44px height but tighter horizontal padding and smaller
+// text for dense contexts (e.g. inline card actions), NOT a smaller hit area.
 const sizes = {
-  sm: 'h-9 px-4 text-sm',
+  sm: 'h-11 px-4 text-sm',
   md: 'h-11 px-6 text-base',
   lg: 'h-12 px-8 text-lg',
+}
+
+// Absolute URL schemes the button is allowed to link to. Everything else with a
+// scheme (javascript:, data:, vbscript:, file:, …) is rejected.
+const SAFE_ABSOLUTE_SCHEME = /^(https?:|tel:|mailto:)/i
+// Detects a leading URL scheme ("name:") so we can distinguish "some-scheme:…"
+// from a scheme-less relative reference (path / #hash / ?query).
+const HAS_URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i
+// http(s) or protocol-relative "//" → treated as an external, new-tab link.
+const IS_EXTERNAL = /^(https?:)?\/\//i
+
+/**
+ * Validate and normalize an `href` against a strict protocol allowlist.
+ *
+ * Returns the trimmed href when it is safe to place on an anchor — namely an
+ * `http(s):`, `tel:`, or `mailto:` absolute URL, or any scheme-less relative
+ * reference (`/courses`, `#section`, `?q=1`). Any other explicit scheme
+ * (`javascript:`, `data:`, `vbscript:`, …) is rejected and yields `null`, so a
+ * hostile or mistaken caller can never turn the canonical Button into a script
+ * or data-URI injection vector (m03).
+ *
+ * @param {unknown} value - The candidate href.
+ * @returns {string|null} The safe href, or `null` when the scheme is disallowed.
+ */
+function sanitizeHref(value) {
+  if (typeof value !== 'string') return null
+  const href = value.trim()
+  if (!href) return null
+  if (SAFE_ABSOLUTE_SCHEME.test(href)) return href
+  if (HAS_URL_SCHEME.test(href)) return null // an explicit, non-allowlisted scheme → unsafe
+  return href // scheme-less relative reference → safe
 }
 
 function Button({
@@ -100,15 +143,23 @@ function Button({
     )
   }
 
-  // External / protocol links render a semantic <a>. Only http(s) URLs are
-  // "external" and open in a new tab (with rel="noopener noreferrer" for
-  // security). tel:, mailto: and other schemes open in place so the native
-  // handler (dialer, mail client) launches directly.
-  if (href) {
-    const isExternal = /^https?:\/\//.test(href)
-    const externalProps = isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {}
+  // External / protocol links render a semantic <a>, but ONLY after the href
+  // passes the protocol allowlist (sanitizeHref). http(s) and protocol-relative
+  // URLs are "external" and open in a new tab with rel="noopener noreferrer";
+  // tel:/mailto: open in place so the native handler (dialer, mail client)
+  // launches directly. An href with a disallowed scheme (javascript:, data:, …)
+  // yields safeHref=null and falls through to the <button> branch below, so the
+  // control stays a real, focusable element that simply does not navigate.
+  //
+  // Security props are applied AFTER the caller's {...props} so href, the merged
+  // className, and target/rel cannot be overridden by a future caller (m03).
+  const safeHref = sanitizeHref(href)
+  if (safeHref) {
+    const externalProps = IS_EXTERNAL.test(safeHref)
+      ? { target: '_blank', rel: 'noopener noreferrer' }
+      : {}
     return (
-      <a href={href} className={classes} {...externalProps} {...props}>
+      <a {...props} href={safeHref} className={classes} {...externalProps}>
         {children}
       </a>
     )

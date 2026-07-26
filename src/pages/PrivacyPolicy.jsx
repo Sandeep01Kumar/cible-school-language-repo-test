@@ -14,52 +14,72 @@ const crumbs = [
   { name: 'Privacy Policy', path: '/privacy-policy' },
 ]
 
-// Human-readable revision date surfaced in the "Last updated" line.
-const lastUpdated = 'January 2025'
-
-// Representative privacy-policy copy — this is production-quality structure and
-// polished, plausible wording, but it is NOT verified legal text. It MUST be
-// reviewed and finalized by the institute's legal team before launch
-// (AAP §0.7.2: authentic, legally-reviewed copy is client-supplied). Module-local.
+// Privacy-policy copy REWRITTEN to describe how this website ACTUALLY works
+// (M07 / M09): a static, client-only site with NO backend or database. The
+// forms do not transmit data to a CIBLE server — they open a pre-filled
+// WhatsApp or email draft on the visitor's own device, which is sent only if
+// the visitor presses send. The text therefore discloses the third parties that
+// process that message (WhatsApp/Meta and email providers), corrects the earlier
+// false "analytics/collection/retention/deletion" claims, and addresses minors.
+//
+// This remains representative pre-launch copy: it MUST be reviewed by legal
+// counsel and approved by the institute before publication (AAP §0.7.2 —
+// authentic, legally-reviewed copy is client-supplied). That pending-approval
+// status is surfaced to visitors in the notice box below. Module-local.
 const sections = [
   {
-    heading: 'Information We Collect',
-    body: 'When you submit an admission or contact form, we collect the details you provide such as your name, phone number, email address and course of interest. We may also collect basic, non-identifying analytics about how visitors use our website.',
+    heading: 'How This Website Works',
+    body: 'CIBLE School of Language operates this website as a static, client-side website with no backend server and no database. Nothing you type into a form is transmitted to, or stored on, a CIBLE server. Instead, our admission, contact and newsletter forms open a pre-filled message — a WhatsApp chat or an email draft — on your own device. That message is sent only if you choose to press send.',
+  },
+  {
+    heading: 'Information You Choose to Share',
+    body: 'The only personal information we receive is what you decide to send us through those channels: typically your name, phone number, email address and course of interest, plus anything you write in your message. We ask only for the details needed to respond to your enquiry, and you never have to submit a form to browse the site.',
+  },
+  {
+    heading: 'Third-Party Processing (WhatsApp / Meta and Email)',
+    body: 'Because your message is delivered through WhatsApp or email, your information is handled by those third parties. WhatsApp messages are processed by WhatsApp and Meta under the WhatsApp and Meta privacy policies; email is processed by your email provider and by the provider of the institute\u2019s inbox. Their handling of your data is governed by their own terms and privacy policies, which we do not control. Please review them before sending sensitive information.',
+  },
+  {
+    heading: 'No Tracking, Analytics or Advertising Cookies',
+    body: 'This website does not use analytics, advertising, tracking pixels, or cookies that identify you, and it does not build visitor profiles. We do not collect browsing data about you.',
   },
   {
     heading: 'How We Use Your Information',
-    body: 'We use your information to respond to enquiries, provide course and admission guidance, schedule counseling sessions and keep you informed about relevant programs at CIBLE School of Language. We do not sell your personal information.',
+    body: 'We use the details you send only to respond to your enquiry, provide course and admission guidance, and arrange counseling sessions or campus visits. We do not maintain a marketing database, and we do not sell or rent your personal information.',
   },
   {
-    heading: 'Information Sharing',
-    body: 'We do not share your personal information with third parties except as required to operate our services or comply with applicable law. Any service providers we use are expected to protect your information.',
+    heading: 'Data Retention and Your Choices',
+    body: 'Because we do not operate a server-side database, any message you send lives in WhatsApp, in your own email, and in the institute\u2019s inbox. To review, correct or remove information you have sent, contact us using the details below, or use the controls provided by WhatsApp/Meta or your email provider. You remain in control of what you choose to send.',
   },
   {
-    heading: 'Data Security',
-    body: 'We take reasonable measures to protect the information you share with us. However, no method of transmission over the internet is completely secure, and we cannot guarantee absolute security.',
-  },
-  {
-    heading: 'Your Choices',
-    body: 'You may request access to, correction of, or deletion of the personal information you have shared with us by contacting us using the details below.',
+    heading: 'Children\u2019s Privacy',
+    body: 'Our courses serve learners of many ages. If you are under 18, please involve a parent or guardian before sharing personal details or submitting a form, and share only the information necessary for an admission enquiry.',
   },
   {
     heading: 'Changes to This Policy',
-    body: 'We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.',
+    body: 'As the institute finalizes its operations, this policy will be reviewed by legal counsel and updated. Any changes will be posted on this page with a revised date once the policy is formally published.',
   },
 ]
 
 /**
  * PrivacyPolicy — the `/privacy-policy` legal page for CIBLE School of Language.
  *
- * A readable, long-form legal-prose page that explains how the institute
- * collects, uses, shares and protects the personal information visitors submit
- * through the website's admission and contact forms. It is lazy-loaded by the
- * route table in `src/App.jsx`
- * (`const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy.jsx'))`,
- * `<Route path="privacy-policy" element={<PrivacyPolicy />} />`) and rendered
- * inside the shared `<Layout>`, so this component renders ONLY page content —
- * the persistent Navbar, Footer and floating conversion widgets are owned by
- * the layout shell.
+ * A readable, long-form legal-prose page that describes how the institute
+ * handles the personal information visitors choose to share through the
+ * website's WhatsApp and email enquiry forms. Critically, it reflects the
+ * site's ACTUAL data-flow (M07 / M09): this is a static, client-only website
+ * with no backend — forms open a pre-filled WhatsApp/email draft on the
+ * visitor's device rather than transmitting data to a CIBLE server — so the
+ * copy discloses the third parties (WhatsApp/Meta, email providers) that
+ * process those messages, states that no analytics/tracking is used, and
+ * addresses minors. It is lazy-loaded by the route table in `src/App.jsx`
+ * (`<Route path="privacy-policy" element={<PrivacyPolicy />} />`) and rendered
+ * inside the shared `<Layout>`, so this component renders ONLY page content.
+ *
+ * Pending legal approval: the copy is representative pre-launch text that has
+ * NOT yet been reviewed by legal counsel or approved by the institute; that
+ * status is surfaced to visitors in a `role="note"` disclosure at the top of
+ * the page, and no effective date is asserted until the policy is published.
  *
  * Reuse-first composition (zero duplication): the page is assembled entirely
  * from the canonical primitives — `<Seo>`/`<StructuredData>` for the head,
@@ -67,27 +87,13 @@ const sections = [
  * `<h1>`, `<Breadcrumbs>` for the hierarchy trail and `<CTASection>` for the
  * closing admission call-to-action that every page shares.
  *
- * Semantics & accessibility (WCAG AA):
- * - Exactly ONE `<h1>` on the page — the header rendered by
- *   `<SectionHeading as="h1">`. Every policy section title below is a genuine
- *   `<h2>` in document order, keeping a logical heading outline for assistive
- *   technology.
- * - The body copy is real long-form prose rendered with semantic `<p>`
- *   elements. Legal pages legitimately use bare `<h2>`/`<p>` for prose rather
- *   than restyling a component's role.
- * - The narrow `max-w-3xl` measure on the prose `<Container>` keeps line length
- *   comfortable for reading long-form legal text.
- * - The contact address is a real, actionable `mailto:` link
- *   (`siteConfig.emailHref`) with a visible hover affordance.
- *
- * SEO: `<Seo>` emits a unique title/description/canonical (and Open Graph /
- * Twitter) head for the page, and `<StructuredData breadcrumbs={crumbs}>`
- * injects a BreadcrumbList JSON-LD block that mirrors the visible trail.
- *
- * All styling flows through the Tailwind `@theme` brand tokens defined in
- * `src/index.css` (spacing on the project's 8px scale, `text-foreground` /
- * `text-muted` / `text-primary-600`); there are no hardcoded or arbitrary
- * values and no runtime class composition — the classNames are static.
+ * Semantics & accessibility (WCAG AA): exactly ONE `<h1>` (via
+ * `<SectionHeading as="h1">`); every policy section title is a genuine `<h2>`
+ * in document order; body copy is real long-form prose in semantic `<p>`
+ * elements; the narrow `max-w-3xl` measure keeps line length comfortable; and
+ * the contact address is a real, actionable `mailto:` link. All styling flows
+ * through the Tailwind `@theme` brand tokens defined in `src/index.css` on the
+ * 8px spacing scale — no hardcoded or arbitrary values.
  *
  * @returns {import('react').ReactElement} The rendered privacy policy page.
  */
@@ -97,7 +103,7 @@ function PrivacyPolicy() {
       <Seo
         title="Privacy Policy"
         canonical="/privacy-policy"
-        description="Read the CIBLE School of Language privacy policy — how we collect, use, share and protect the personal information you provide through our website and admission forms."
+        description="How CIBLE School of Language handles the information you share through our website's WhatsApp and email enquiry forms — a static, client-only site with no backend data collection."
       />
       <StructuredData breadcrumbs={crumbs} />
 
@@ -109,13 +115,22 @@ function PrivacyPolicy() {
           align="left"
           eyebrow="Legal"
           title="Privacy Policy"
-          subtitle="How CIBLE School of Language handles your personal information."
+          subtitle="How CIBLE School of Language handles the information you choose to share."
         />
       </Container>
 
       {/* Prose body — narrow measure for readable long-form legal text */}
       <Container as="section" className="max-w-3xl pb-16 md:pb-20">
-        <p className="text-sm text-muted">Last updated: {lastUpdated}</p>
+        {/* Draft / pending-approval disclosure (M09). No effective date is
+            asserted until the policy is reviewed by counsel and published. */}
+        <div role="note" className="rounded-xl border border-border bg-secondary-50 p-4">
+          <p className="text-sm leading-relaxed text-foreground">
+            <strong className="font-semibold">Draft for review.</strong> This Privacy Policy is a representative
+            pre-launch draft that describes how the website currently works. It has not yet been reviewed by legal
+            counsel or approved by CIBLE School of Language, and no effective date applies until it is published.
+          </p>
+        </div>
+
         {sections.map((section) => (
           <div key={section.heading}>
             <h2 className="mt-8 mb-3 text-xl font-semibold text-foreground md:text-2xl">

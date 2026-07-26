@@ -62,10 +62,12 @@ import 'swiper/css/a11y'
  * Styling:
  * - Every value resolves to a Tailwind `@theme` brand token defined in
  *   `src/index.css` (`bg-surface`, `bg-foreground/90`, `text-muted`,
- *   `rounded-2xl`) or a native/utility token (`text-white`, `bg-white/10`,
- *   `aspect-[4/3]`, `max-h-[85vh]`, `z-50`). There are no hardcoded style
- *   values. Class composition (including the caller `className`, merged last so
- *   it can override) flows through the shared `cn()` helper.
+ *   `rounded-2xl`), a built-in utility (`text-white`, `bg-white/10`, `z-50`), or
+ *   one of the project's custom named utilities from `src/index.css`
+ *   (the 4:3 thumbnail-frame utility and the lightbox max-height ceiling
+ *   utility). There are no hardcoded or arbitrary-value style classes.
+ *   Class composition (including the caller `className`, merged last so it can
+ *   override) flows through the shared `cn()` helper.
  *
  * @param {object} props
  * @param {Array<{src: string, alt: string, caption?: string}>} [props.images=[]]
@@ -227,7 +229,7 @@ export default function Gallery({ images = [], className, lightbox = true, ...pr
               src={img.src}
               alt={img.alt}
               loading="lazy"
-              className="aspect-[4/3] h-full w-full object-cover"
+              className="aspect-4-3 h-full w-full object-cover"
             />
           )
           return (
@@ -287,7 +289,7 @@ export default function Gallery({ images = [], className, lightbox = true, ...pr
                 <img
                   src={activeImage.src}
                   alt={activeImage.alt}
-                  className="max-h-[85vh] max-w-full rounded-2xl object-contain"
+                  className="max-h-screen-85 max-w-full rounded-2xl object-contain"
                 />
                 {activeImage.caption ? (
                   <figcaption className="text-center text-sm text-white/80">

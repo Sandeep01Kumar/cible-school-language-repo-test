@@ -6,6 +6,7 @@ import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import ReviewCard from '../components/common/ReviewCard.jsx'
 import TestimonialSlider from '../components/common/TestimonialSlider.jsx'
 import Statistics from '../components/common/Statistics.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import testimonials from '../data/testimonials.js'
 
@@ -13,9 +14,11 @@ import testimonials from '../data/testimonials.js'
  * SuccessStories — CIBLE School of Language (route `/success-stories`).
  *
  * The site's social-proof page. It converts prospective students and parents by
- * showcasing real CIBLE outcomes — spoken-English confidence, exam results and
- * career wins — through three reinforcing trust signals, then closes with the
- * shared admission CTA:
+ * showcasing CIBLE outcomes — spoken-English confidence, exam results and career
+ * wins — through three reinforcing trust signals, then closes with the shared
+ * admission CTA. The testimonials are polished REPRESENTATIVE samples (not
+ * verified student records); a `RepresentativeNote` discloses this at the top of
+ * the review grid and the site-wide Footer band reinforces it (M03, AAP §0.7.2):
  *
  *   1. A responsive grid of canonical <ReviewCard>s (one per testimonial), so
  *      every review is scannable at a glance on the initial viewport.
@@ -89,8 +92,18 @@ function SuccessStories() {
         />
       </Container>
 
-      {/* Review grid — one canonical <ReviewCard> per testimonial. */}
-      <Container as="section" className="pb-16 md:pb-20">
+      {/* Review grid — one canonical <ReviewCard> per testimonial. Labelled as a
+          region (m06) with a visually-hidden <h2> referenced via
+          `aria-labelledby`, because each ReviewCard renders a
+          <figure>/<blockquote>/<figcaption> with no heading of its own, so the
+          section would otherwise have no accessible name. */}
+      <Container as="section" aria-labelledby="reviews-heading" className="pb-16 md:pb-20">
+        <h2 id="reviews-heading" className="sr-only">Student reviews</h2>
+        <RepresentativeNote className="mb-8">
+          These success stories and reviews are representative samples for
+          demonstration, not verified student records. They will be replaced with
+          consent-approved outcomes before launch.
+        </RepresentativeNote>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((review) => (
             <ReviewCard key={review.name} review={review} />

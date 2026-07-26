@@ -1,12 +1,43 @@
 import { Helmet } from 'react-helmet-async'
 import { siteConfig } from '../../data/siteConfig.js'
 
+/**
+ * Resolve a path to an absolute URL against `siteConfig.siteUrl`. An absolute
+ * `http(s)` value is returned unchanged; a falsy value yields the site root.
+ * @param {string} [path] A relative path (`/courses`) or absolute URL.
+ * @returns {string} The absolute URL.
+ */
 const absoluteUrl = (path) => {
   if (!path) return siteConfig.siteUrl
   if (path.startsWith('http')) return path
   return `${siteConfig.siteUrl}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+/**
+ * Seo — the single per-page head manager for the CIBLE School of Language SPA
+ * (AAP §0.6.1 Group 10). Rendered by every page, it is the SOLE source of the
+ * route-specific SEO head via `react-helmet-async`: `index.html` deliberately
+ * carries NO route-specific SEO tags, so each field below is emitted exactly
+ * ONCE with no static duplicate to conflict with (M01).
+ *
+ * Emits: `<title>` (page title, or the brand name alone on the home/untitled
+ * page), a `description`, the Open Graph block (type, site_name, title,
+ * description, url*, image + 1200×630 dimensions, locale) and the Twitter
+ * summary-large-image block.
+ *
+ * Canonical safety (M01): a canonical `<link>` and `og:url` are emitted ONLY
+ * when the page supplies an explicit `canonical`. The catch-all 404 NotFound
+ * route passes none — so it self-canonicalises to NOTHING rather than wrongly
+ * pointing every unknown URL at the homepage (the previously reported bug).
+ *
+ * @param {object} props
+ * @param {string} [props.title] Page title; combined as `"<title> | <brand>"`.
+ * @param {string} [props.description] Meta/OG/Twitter description; falls back to `siteConfig.description`.
+ * @param {string} [props.canonical] Canonical path/URL; when omitted NO canonical/og:url is emitted.
+ * @param {string} [props.image] OG/Twitter image; falls back to `siteConfig.ogImage`.
+ * @param {'website'|'article'} [props.type='website'] Open Graph `og:type`.
+ * @returns {import('react').ReactElement} A Helmet fragment of head tags.
+ */
 function Seo({ title, description, canonical, image, type = 'website' }) {
   const pageTitle = title ? `${title} | ${siteConfig.name}` : siteConfig.name
   const metaDescription = description || siteConfig.description
@@ -30,6 +61,11 @@ function Seo({ title, description, canonical, image, type = 'website' }) {
       <meta property="og:description" content={metaDescription} />
       {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
       <meta property="og:image" content={ogImage} />
+      {/* Standard 1.91:1 share-image dimensions. Emitted here (not statically in
+          index.html) so the whole OG block stays single-sourced in Helmet and
+          never duplicates/conflicts across routes (M01). */}
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:locale" content="en_IN" />
 
       <meta name="twitter:card" content="summary_large_image" />

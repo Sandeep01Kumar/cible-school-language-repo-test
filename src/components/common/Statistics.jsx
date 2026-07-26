@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import CountUpModule from 'react-countup'
 import { motion } from 'framer-motion'
 import Container from '../ui/Container.jsx'
@@ -78,6 +79,11 @@ const CountUp = typeof CountUpModule === 'function' ? CountUpModule : CountUpMod
  *    always-present text label, so color is never the sole carrier of meaning.
  *
  * Accessibility (WCAG AA):
+ *  - The band is a labelled landmark: the `<section>` carries `aria-labelledby`
+ *    pointing at an `sr-only` `<h2>` (a `useId()`-generated id keeps it unique
+ *    even if the band is used more than once on a page), so assistive technology
+ *    announces the region by name and it appears in the heading outline, without
+ *    adding a visible heading that would alter the premium counter-bar design.
  *  - The metrics are a semantic list (`<ul>`/`<li>`), so assistive technology
  *    announces the group and its item count.
  *  - Icons are purely decorative and removed from the accessibility tree with
@@ -87,6 +93,9 @@ const CountUp = typeof CountUpModule === 'function' ? CountUpModule : CountUpMod
  *    an animation.
  *
  * @param {object} props
+ * @param {string} [props.heading='By the numbers'] Accessible name for the band.
+ *   Rendered into an `sr-only` `<h2>` and referenced by the section's
+ *   `aria-labelledby`; override it when a page needs a more specific label.
  * @param {Array<{
  *   label: string,
  *   value: number,
@@ -101,7 +110,7 @@ const CountUp = typeof CountUpModule === 'function' ? CountUpModule : CountUpMod
  *   background on a differently themed section).
  * @returns {import('react').ReactElement} The statistics band `<section>`.
  */
-function Statistics({ items = stats, className, ...props }) {
+function Statistics({ items = stats, heading = 'By the numbers', className, ...props }) {
   // Single, unconditional, top-level hook (satisfies react/rules-of-hooks):
   // `ref` is a callback ref attached to the grid; `inView` gates BOTH the
   // framer-motion reveal and the mounting of the count-up numbers.
@@ -112,10 +121,22 @@ function Statistics({ items = stats, className, ...props }) {
   // replaced by a STATIC final value — a JS-driven count that the CSS
   // reduced-motion reset in src/index.css cannot neutralize (WCAG 2.3.3).
   const reduce = prefersReducedMotion()
+  // Collision-safe id linking the section's accessible name to its sr-only
+  // heading, so the band stays a properly labelled landmark even when rendered
+  // more than once on a page (Home + About). Top-level hook — rules-of-hooks OK.
+  const headingId = useId()
 
   return (
-    <section className={cn('bg-primary-700 py-16 text-white md:py-20', className)} {...props}>
+    <section
+      aria-labelledby={headingId}
+      className={cn('bg-primary-700 py-16 text-white md:py-20', className)}
+      {...props}
+    >
       <Container>
+        {/* Visually hidden but AT- and outline-visible section name (m06). */}
+        <h2 id={headingId} className="sr-only">
+          {heading}
+        </h2>
         <motion.ul
           ref={ref}
           variants={staggerContainer}

@@ -19,8 +19,13 @@
  * A single CIBLE event.
  *
  * @typedef {Object} CibleEvent
+ * @property {string} slug        Stable, URL-safe identifier. Used to build event-aware
+ *                                Register links (`/contact?event=<slug>`) and validated as an
+ *                                allowlist by the Contact page so an event's identity survives the
+ *                                handoff. Must be unique and match the `/events/<slug>.jpg` asset path.
  * @property {string} title       Human-readable event name.
- * @property {string} date        ISO 'YYYY-MM-DD' date string (parseable by `new Date(date)`).
+ * @property {string} date        ISO 'YYYY-MM-DD' date string. Parse for display with
+ *                                {@link module:lib/dates.parseCivilDate} to avoid the UTC day-shift.
  * @property {string} [time]      Optional display time, e.g. '10:00 AM – 1:00 PM'.
  * @property {('Workshop'|'Seminar'|'Batch Start'|'Competition'|'Webinar')} [type] Optional category.
  * @property {string} description One–two inviting, admission-oriented sentences.
@@ -36,6 +41,7 @@
  */
 export const events = [
   {
+    slug: 'free-spoken-english-workshop',
     title: 'Free Spoken English Workshop',
     date: '2026-08-16',
     time: '10:00 AM – 1:00 PM',
@@ -47,6 +53,7 @@ export const events = [
     image: null,
   },
   {
+    slug: 'personality-development-seminar',
     title: 'Personality Development Seminar',
     date: '2026-08-30',
     time: '11:00 AM – 1:00 PM',
@@ -58,6 +65,7 @@ export const events = [
     image: null,
   },
   {
+    slug: 'pcm-pcb-batch-orientation',
     title: 'New PCM & PCB Science Batch Orientation',
     date: '2026-09-13',
     time: '9:00 AM – 11:00 AM',
@@ -69,6 +77,7 @@ export const events = [
     image: null,
   },
   {
+    slug: 'public-speaking-competition',
     title: 'Spoken English & Public Speaking Competition',
     date: '2026-09-27',
     time: '10:00 AM – 4:00 PM',
@@ -80,6 +89,7 @@ export const events = [
     image: null,
   },
   {
+    slug: 'digital-literacy-webinar',
     title: 'Digital Literacy & Online Interview Skills Webinar',
     date: '2026-10-18',
     time: '6:00 PM – 7:30 PM',

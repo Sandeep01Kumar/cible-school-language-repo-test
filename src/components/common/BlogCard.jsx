@@ -1,6 +1,7 @@
 import Card from '../ui/Card.jsx'
 import Badge from '../ui/Badge.jsx'
 import { cn } from '../../lib/cn.js'
+import { formatCivilDate } from '../../lib/dates.js'
 import { FiCalendar, FiClock } from 'react-icons/fi'
 
 /**
@@ -54,18 +55,15 @@ import { FiCalendar, FiClock } from 'react-icons/fi'
  */
 
 // Format an ISO date as e.g. "15 Jul 2025" using the en-IN locale (the
-// institute's audience). Module-scope (not a hook, not exported) so the file
-// exposes only the BlogCard component (react/only-export-components). Guards an
-// invalid/unparseable date by returning '' so the <time> stays empty instead of
-// rendering "Invalid Date".
+// institute's audience). Delegates to the shared `formatCivilDate`
+// (src/lib/dates.js), which parses a date-only 'YYYY-MM-DD' string as a CIVIL
+// date rather than at UTC midnight — eliminating the off-by-one day-shift the
+// review observed under timezones west of UTC (M21). It already guards
+// invalid/unparseable dates by returning '' so the <time> stays empty instead
+// of rendering "Invalid Date". Module-scope (not a hook, not exported) so the
+// file exposes only the BlogCard component (react/only-export-components).
 function formatDate(iso) {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return ''
-  return new Intl.DateTimeFormat('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
+  return formatCivilDate(iso, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function BlogCard({ post, className, ...props }) {

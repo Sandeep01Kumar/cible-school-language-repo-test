@@ -11,10 +11,10 @@ import { cn } from '../../lib/cn.js'
  *
  * Design system (Tailwind CSS v4 `@theme` tokens defined in src/index.css):
  * - Shape/type are fixed by `base`: a fully rounded pill (`rounded-full`) with an
- *   8px-scale gutter (`px-3 py-1` = 12px / 4px) and small, semibold label text
+ *   8px-scale gutter (`px-4 py-2` = 16px / 8px) and small, semibold label text
  *   (`text-xs font-semibold`). Icon + text children align via `inline-flex
- *   items-center gap-1`. Every value resolves to a token/utility — no hardcoded
- *   styles and no arbitrary values.
+ *   items-center gap-2` (8px). Every spacing value is an even step on the 8px
+ *   scale — no 4px/12px half-steps, no hardcoded or arbitrary values.
  * - Color is chosen by `variant` from the module-local `variants` map. Each pairing
  *   is a LIGHT brand-scale fill (`-50`) with DARK brand-scale text (`-700`), or the
  *   neutral surface with the standard foreground. This "dark text on light fill"
@@ -46,7 +46,7 @@ import { cn } from '../../lib/cn.js'
 
 // Fixed shape + typography shared by every variant (module-local; not exported so
 // `react/only-export-components` stays clean).
-const base = 'inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold'
+const base = 'inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold'
 
 // Variant → color utilities. Light token fill (`-50` / surface-muted) paired with
 // dark token text (`-700` / foreground) for WCAG AA contrast (module-local).

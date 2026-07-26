@@ -4,36 +4,34 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#2563eb" />
 
-    <!-- Primary SEO (site-wide defaults; per-page values injected via react-helmet-async) -->
-    <meta name="description" content="CIBLE School of Language in Madhubani, Bihar — Spoken English, English Communication, Personality Development, Public Speaking, Interview Preparation, PCM/PCB Science coaching and Computer courses. Learn English. Build Confidence. Shape Your Future." />
-    <link rel="canonical" href="https://www.cibleschool.com/" />
+    <!--
+      SEO head is managed PER PAGE by react-helmet-async via the <Seo> component
+      (src/components/seo/Seo.jsx): title, description, canonical, Open Graph and
+      Twitter tags, plus JSON-LD (src/components/seo/StructuredData.jsx). Those
+      route-specific tags are intentionally NOT declared statically here — keeping
+      them would produce duplicate/conflicting values (two descriptions, a
+      homepage canonical leaking onto inner routes and the 404 view) once Helmet
+      injects its own (M01). Only genuine, non-route-specific document defaults
+      live below: charset, icon, manifest, viewport (with viewport-fit=cover for
+      iOS safe areas — M13), theme-color, and the font links.
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="CIBLE School of Language" />
-    <meta property="og:title" content="CIBLE School of Language | Spoken English, Science & Computer Coaching" />
-    <meta property="og:description" content="Learn English. Build Confidence. Shape Your Future. Admission-focused coaching in Spoken English, Science (PCM/PCB) and Computer courses in Madhubani, Bihar." />
-    <meta property="og:url" content="https://www.cibleschool.com/" />
-    <meta property="og:image" content="https://www.cibleschool.com/og-image.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content="en_IN" />
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="CIBLE School of Language | Spoken English, Science & Computer Coaching" />
-    <meta name="twitter:description" content="Learn English. Build Confidence. Shape Your Future. Admission-focused coaching in Madhubani, Bihar." />
-    <meta name="twitter:image" content="https://www.cibleschool.com/og-image.jpg" />
+      No static <title> is declared here either: react-helmet-async (v3, on
+      React 19's native metadata path) APPENDS the per-route <title> it emits
+      rather than replacing a pre-existing static one, so declaring a <title>
+      here would leave two <title> elements in the head — a duplicate-tag defect
+      (M01). The document title is therefore emitted solely per route by <Seo>,
+      guaranteeing exactly one correct <title> per page. The tab briefly shows the
+      URL before hydration — an acceptable trade-off for this client-rendered SPA
+      in exchange for a single, non-duplicated, per-route title.
+    -->
 
     <!-- Fonts: Inter (design-system --font-sans) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-
-    <title>CIBLE School of Language | Spoken English, Science & Computer Coaching in Madhubani</title>
   </head>
   <body>
     <div id="root"></div>

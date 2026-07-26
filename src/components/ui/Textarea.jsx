@@ -72,7 +72,7 @@ function Textarea({ id, label, error, hint, required = false, rows = 4, classNam
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={cn(
-          'w-full resize-y rounded-md border border-border bg-white px-3 py-2 text-base text-foreground shadow-sm',
+          'w-full resize-y rounded-md border border-border bg-white px-4 py-2 text-base text-foreground shadow-sm',
           'placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-1',
           'disabled:cursor-not-allowed disabled:opacity-50',
           error && 'border-secondary-600 focus-visible:ring-secondary-600',

@@ -2,9 +2,9 @@
 
 Bundled, **import-time** brand assets for the CIBLE School of Language website. These files are imported by React components (`import logo from '../../assets/logo.svg'`) and processed by Vite's asset pipeline (hashed/emitted, or inlined as a data URI when under ~4 KB).
 
-> **Not the same as `public/`.** Runtime static files served from the site root — `favicon.svg`, `og-image.jpg`, `robots.txt`, `sitemap.xml`, `site.webmanifest` — live in `public/` and are owned separately. Do **not** move those here, and do **not** import files from here through absolute `/` URLs. The social share image is `public/og-image.jpg` (referenced as `/og-image.jpg`), **not** an asset in this folder.
+> **Not the same as `public/`.** Runtime static files served from the site root — `favicon.svg`, `og-image.jpg`, `logo.svg` (a **separate** copy served at `/logo.svg` for JSON-LD `Organization.logo`), `robots.txt`, `sitemap.xml`, `site.webmanifest` — live in `public/` and are owned separately. Do **not** move those here, and do **not** import files from here through absolute `/` URLs. The social share image is `public/og-image.jpg` (referenced as `/og-image.jpg`), **not** an asset in this folder. Note that `public/logo.svg` (root-served, used by structured data) and `src/assets/logo.svg` (import-time, used by the `<Navbar>`) are intentionally two copies for two different pipelines.
 
-All artwork here is authored as lightweight, optimized **SVG** (crisp at any size, tiny, responsive) on the CIBLE brand palette. Every image ships with `role="img"`, a `<title>`, and an `aria-label`; in addition, **the consuming component must supply a meaningful `alt` (or `aria-label`) via its `<img>`** describing the specific content (course name, faculty name/role). Purely decorative usage should pass `alt=""`.
+All artwork here is authored as lightweight, optimized **SVG** (crisp at any size, tiny, responsive) on the CIBLE brand palette. Every image ships with `role="img"`, a `<title>`, and an `aria-label`; in addition, **the consuming component must supply a meaningful `alt` (or `aria-label`) via its `<img>`** describing the specific content (course name). Purely decorative usage should pass `alt=""`.
 
 ## Brand palette (reference)
 
@@ -19,17 +19,20 @@ All artwork here is authored as lightweight, optimized **SVG** (crisp at any siz
 
 ## Inventory & import contract
 
+The **Imported by** column lists the exact modules that `import` each file today (verified against the source). If you add a new consumer, update this table.
+
 | File | viewBox / size | Imported by | Notes |
 | --- | --- | --- | --- |
-| `logo.svg` | 300×72 | `layout/Navbar.jsx`, `layout/Footer.jsx` | Color wordmark (blue C-mark + orange dot). |
-| `logo-white.svg` | 300×72 | `layout/Footer.jsx` (dark sections) | Reversed/white variant for dark backgrounds. |
-| `hero.svg` | 640×480 | `common/Hero.jsx`, `pages/Home.jsx` | Home hero illustration. **Replaces the old `hero.png`.** |
-| `course-english.svg` | 400×300 | `common/CourseCard.jsx`, course pages | English category. |
-| `course-personality.svg` | 400×300 | `common/CourseCard.jsx`, course pages | Personality / public-speaking category. |
-| `course-science.svg` | 400×300 | `common/CourseCard.jsx`, `pages/ScienceCoaching.jsx` | Science (PCM/PCB) category. |
-| `course-computer.svg` | 400×300 | `common/CourseCard.jsx`, `pages/ComputerCourses.jsx` | Computer / digital-literacy category. |
-| `course-career.svg` | 400×300 | `common/CourseCard.jsx`, `pages/Career.jsx` | Career-guidance category. |
-| `faculty-1.svg` … `faculty-6.svg` | 160×160 | `common/FacultyCard.jsx`, `pages/Faculty.jsx` | Representative circular portrait avatars. |
+| `logo.svg` | 300×72 | `layout/Navbar.jsx` | Color wordmark (blue C-mark + orange dot). |
+| `logo-white.svg` | 300×72 | `layout/Footer.jsx` | Reversed/white variant for the dark footer. |
+| `hero.svg` | 640×480 | `common/Hero.jsx`, `pages/Gallery.jsx` | Home hero **illustration** (labelled as an illustration, not a photo of real students). **Replaces the old `hero.png`.** |
+| `course-english.svg` | 400×300 | `common/CourseCard.jsx`, `pages/Gallery.jsx` | English category. |
+| `course-personality.svg` | 400×300 | `common/CourseCard.jsx`, `pages/Gallery.jsx` | Personality / public-speaking / interview courses. |
+| `course-science.svg` | 400×300 | `common/CourseCard.jsx`, `pages/Gallery.jsx` | Science (PCM/PCB) category. |
+| `course-computer.svg` | 400×300 | `common/CourseCard.jsx`, `pages/Gallery.jsx` | Computer / digital-literacy category. |
+| `course-career.svg` | 400×300 | `common/CourseCard.jsx`, `pages/Gallery.jsx` | Career-guidance category. |
+
+> **Faculty images are intentionally not bundled here.** `src/data/faculty.js` sets `image: null` for every member and `common/FacultyCard.jsx` renders a graceful **initials-avatar** fallback (initials on a brand-blue circle), so there are no broken images and no orphaned imports. Genuine faculty photographs are supplied by the client and dropped into `public/faculty/<slug>.jpg` (served from `public/`, **not** imported here); set the corresponding `image` field in `faculty.js` at that time. See [Faculty imagery](#faculty-imagery) below.
 
 ### Import path examples
 
@@ -38,17 +41,17 @@ All artwork here is authored as lightweight, optimized **SVG** (crisp at any siz
 import logo from '../../assets/logo.svg'
 import heroImg from '../../assets/hero.svg'
 import courseEnglish from '../../assets/course-english.svg'
-import faculty1 from '../../assets/faculty-1.svg'
 
-// from src/pages/Home.jsx
+// from src/pages/Gallery.jsx (one directory shallower)
 import heroImg from '../assets/hero.svg'
+import courseEnglish from '../assets/course-english.svg'
 ```
 
 Vite returns a URL string from these imports; use it directly as `<img src={heroImg} alt="…" />`.
 
 ## Course → catalog mapping
 
-The five course illustrations cover the ten catalog courses (`src/data/courses.js`) by category — one image reused per category (no per-course duplication):
+The five course illustrations cover the ten catalog courses (`src/data/courses.js`). `common/CourseCard.jsx` resolves the illustration **by course slug first** (`IMAGE_BY_SLUG`), then falls back to the category illustration (`IMAGE_BY_CATEGORY`) — one image reused across related courses, with no per-course duplication:
 
 | Illustration | Catalog courses |
 | --- | --- |
@@ -58,27 +61,23 @@ The five course illustrations cover the ten catalog courses (`src/data/courses.j
 | `course-computer.svg` | Basic Computer, Digital Literacy |
 | `course-career.svg` | Career Guidance |
 
-## Faculty avatar roles
+## Faculty imagery
 
-Representative avatars mapped to roles in `src/data/faculty.js` (distinct palette/hairstyle per person for visual variety):
+There are **no bundled faculty image files.** Faculty avatars are rendered by `common/FacultyCard.jsx` directly from `src/data/faculty.js`:
 
-| Avatar | Suggested role |
-| --- | --- |
-| `faculty-1.svg` | Director |
-| `faculty-2.svg` | English faculty |
-| `faculty-3.svg` | Science (PCM) faculty |
-| `faculty-4.svg` | Science (PCB) faculty |
-| `faculty-5.svg` | Computer faculty |
-| `faculty-6.svg` | Career counselor |
+- While `member.image` is `null` (the current default for all members), the card renders an **initials-avatar** — up to two uppercase initials derived from the name, on a brand-blue circle, exposed to assistive tech as a single labelled image. This keeps the UI free of broken images and free of imports for files that do not exist yet.
+- When the client supplies a real photograph, place it at `public/faculty/<slug>.jpg` (root-served) and set the member's `image` field to that path (e.g. `image: '/faculty/rajeev-ranjan-jha.jpg'`). No component import changes are required.
+
+Because these avatars are representative until real photos arrive, the Faculty page (and the site-wide footer notice) carry a visible representative-content disclosure.
 
 ## ⚠️ Placeholder media — swap before production (AAP §0.7.2)
 
 These are **production-quality representative** brand illustrations, **not** genuine institute media. Replace the following with authentic, client-supplied assets before go-live, **keeping the same filenames** so no component imports need to change:
 
-- `hero.svg` — swap for a real campus/classroom hero (photo or bespoke illustration).
+- `hero.svg` — an on-brand illustration explicitly labelled as an illustration; swap for a real campus/classroom hero (photo or bespoke illustration) once genuine media and any required consent are available.
 - `course-*.svg` — swap for real course/classroom imagery if desired.
-- `faculty-*.svg` — **replace with real faculty photographs** and update names/roles in `src/data/faculty.js`.
-- `logo.svg` / `logo-white.svg` — replace with the official CIBLE logo files if an authoritative version exists.
+- `logo.svg` / `logo-white.svg` (and `public/logo.svg`) — replace with the official CIBLE logo files if an authoritative version exists.
+- Faculty photos — add real photographs at `public/faculty/<slug>.jpg` and set the `image` fields in `src/data/faculty.js` (see [Faculty imagery](#faculty-imagery)).
 
 ## Removed boilerplate
 

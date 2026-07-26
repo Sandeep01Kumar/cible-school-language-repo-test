@@ -19,8 +19,11 @@
  *                        Twitter head tags. `title="Courses"` resolves to the
  *                        document title "Courses | CIBLE School of Language".
  * - `<StructuredData>` — emits BreadcrumbList JSON-LD from `crumbs` so the
- *                        visible trail and the structured data always agree
- *                        (search-engine friendly, AAP §0.6.3 SEO).
+ *                        visible trail and the structured data always agree,
+ *                        PLUS one Course JSON-LD block for every catalog entry
+ *                        (`courses.map(courseSchema)`) so all ten courses —
+ *                        including Career Guidance — are covered by structured
+ *                        data (search-engine friendly, AAP §0.6.3 SEO; M19).
  * - `<Container as="section">` — the single canonical width/gutter wrapper,
  *                        rendered as a semantic `<section>` landmark.
  * - `<Breadcrumbs>`    — the visible hierarchy trail (Home / Courses), sharing
@@ -54,8 +57,10 @@ import Container from '../components/ui/Container.jsx'
 import SectionHeading from '../components/ui/SectionHeading.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import CourseGrid from '../components/common/CourseGrid.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import { courses } from '../data/courses.js'
+import { courseSchema } from '../lib/schema.js'
 
 // Breadcrumb trail for this page. Module-local (never exported) so the file's
 // only public export stays the `Courses` component. The identical array is
@@ -74,7 +79,13 @@ function Courses() {
         canonical="/courses"
         description="Browse all CIBLE courses — Spoken English, English Communication, Personality Development, Public Speaking, Interview Preparation, PCM & PCB science coaching, Basic Computer, Digital Literacy and Career Guidance."
       />
-      <StructuredData breadcrumbs={crumbs} />
+      {/* Breadcrumb trail plus one Course JSON-LD block for EVERY catalog entry.
+          `courses` is the full 10-course single source of truth, so mapping it
+          through `courseSchema` guarantees the tenth course (Career Guidance)
+          emits its Course structured data here rather than being the only course
+          with no schema consumer anywhere in the site (M19). StructuredData
+          spreads the array into individual, injection-safe <script> blocks. */}
+      <StructuredData breadcrumbs={crumbs} schema={courses.map(courseSchema)} />
 
       {/* Page header */}
       <Container as="section" className="py-12 md:py-16">
@@ -94,6 +105,11 @@ function Courses() {
             title is an <h3>) nests under an <h2>, keeping the outline
             h1 -> h2 -> h3 with no skipped level for assistive tech (QA Issue 9). */}
         <h2 className="sr-only">All courses</h2>
+        <RepresentativeNote className="mb-8">
+          Course details such as durations and highlights are representative and
+          shown for demonstration. Please confirm the current curriculum, batch
+          timings and fees with the institute before enrolling.
+        </RepresentativeNote>
         <CourseGrid items={courses} showFilter />
       </Container>
 

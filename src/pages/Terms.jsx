@@ -8,6 +8,16 @@
  * a reading-measure `max-w-3xl` container, and closing with the reusable
  * admission `CTASection` that ends every page of the site.
  *
+ * Accurate to the site's model (M07 / M09): the terms reflect that this is a
+ * static, client-only website with no accounts and no backend — enquiries open
+ * a pre-filled WhatsApp/email draft on the visitor's device rather than being
+ * transmitted to a CIBLE server — and a dedicated "Communications & Privacy"
+ * section discloses the third-party (WhatsApp/Meta, email) handling and the
+ * guardian expectation for under-18 visitors, linking to the Privacy Policy.
+ * The copy is representative pre-launch text pending legal counsel / client
+ * approval; that status is surfaced in a `role="note"` disclosure and no
+ * effective date is asserted until publication.
+ *
  * Rendering contract: this component renders ONLY page content. The persistent
  * shell (Navbar, Footer, floating conversion widgets, ScrollToTop) is provided
  * by the routing `<Layout>`, while per-page document `<head>` output is handled
@@ -17,11 +27,12 @@
  *   <Route path="terms" element={<Terms />} />
  *
  * Accessibility (WCAG AA): exactly one `<h1>` (the page header); every section
- * title is a semantic `<h2>`; the contact email is a real `mailto:` `<a>`. All
- * styling flows through the Tailwind `@theme` brand tokens defined in
- * `src/index.css` on the 8px spacing scale — there are no hardcoded values and
- * no runtime class composition (static classNames only, no `cn`).
+ * title is a semantic `<h2>`; the contact email and the Privacy Policy
+ * reference are real links. All styling flows through the Tailwind `@theme`
+ * brand tokens defined in `src/index.css` on the 8px spacing scale — there are
+ * no hardcoded values.
  */
+import { Link } from 'react-router-dom'
 import Seo from '../components/seo/Seo.jsx'
 import StructuredData from '../components/seo/StructuredData.jsx'
 import Container from '../components/ui/Container.jsx'
@@ -38,12 +49,11 @@ const crumbs = [
   { name: 'Terms & Conditions', path: '/terms' },
 ]
 
-const lastUpdated = 'January 2025'
-
-// Representative terms copy — MUST be reviewed and finalized by the institute's
-// legal team before launch (AAP §0.7.2: genuine editorial/legal copy is
-// client-supplied and swapped in later; this is production-quality structure
-// with representative content, not a placeholder page).
+// Representative terms copy, rewritten to match the site's actual client-only
+// model (M07 / M09). MUST be reviewed and finalized by the institute's legal
+// team before launch (AAP §0.7.2). Module-local. The Communications & Privacy
+// cross-reference to the Privacy Policy is rendered as explicit JSX below (so it
+// can carry a real <Link>), not from this string array.
 const sections = [
   {
     heading: 'Acceptance of Terms',
@@ -54,8 +64,8 @@ const sections = [
     body: 'This website is provided for informational purposes about our courses, admissions and activities. You agree to use it only for lawful purposes and not to misuse or disrupt the website or its content.',
   },
   {
-    heading: 'Admissions & Enrolment',
-    body: 'Submitting an admission or enquiry form does not guarantee enrolment. Course availability, batch timings, fees and schedules are subject to confirmation by CIBLE School of Language and may change.',
+    heading: 'Enquiries & Admissions',
+    body: 'This website has no user accounts and no backend server. Our admission, contact and newsletter forms do not transmit data to CIBLE; they open a pre-filled WhatsApp chat or email draft on your own device, which is sent only if you choose to send it. Submitting an enquiry does not guarantee enrolment — course availability, batch timings, fees and schedules are subject to confirmation by CIBLE School of Language and may change.',
   },
   {
     heading: 'Intellectual Property',
@@ -77,7 +87,7 @@ function Terms() {
       <Seo
         title="Terms & Conditions"
         canonical="/terms"
-        description="Read the CIBLE School of Language terms and conditions governing use of our website, admission enquiries, intellectual property and limitations of liability."
+        description="The terms governing use of the CIBLE School of Language website — a static, client-only site whose enquiry forms open a pre-filled WhatsApp or email draft on your device."
       />
       <StructuredData breadcrumbs={crumbs} />
 
@@ -95,13 +105,37 @@ function Terms() {
 
       {/* Prose body */}
       <Container as="section" className="max-w-3xl pb-16 md:pb-20">
-        <p className="text-sm text-muted">Last updated: {lastUpdated}</p>
+        {/* Draft / pending-approval disclosure (M09). No effective date is
+            asserted until these terms are reviewed by counsel and published. */}
+        <div role="note" className="rounded-xl border border-border bg-secondary-50 p-4">
+          <p className="text-sm leading-relaxed text-foreground">
+            <strong className="font-semibold">Draft for review.</strong> These Terms &amp; Conditions are a
+            representative pre-launch draft. They have not yet been reviewed by legal counsel or approved by CIBLE
+            School of Language, and no effective date applies until they are published.
+          </p>
+        </div>
+
         {sections.map((section) => (
           <div key={section.heading}>
             <h2 className="mt-8 mb-3 text-xl font-semibold text-foreground md:text-2xl">{section.heading}</h2>
             <p className="text-muted leading-relaxed">{section.body}</p>
           </div>
         ))}
+
+        {/* Communications & Privacy — explicit JSX so it can link to the Privacy
+            Policy and disclose third-party handling and the guardian expectation
+            for minors (M07). */}
+        <h2 className="mt-8 mb-3 text-xl font-semibold text-foreground md:text-2xl">Communications &amp; Privacy</h2>
+        <p className="text-muted leading-relaxed">
+          When you contact us through WhatsApp or email, your message is handled by those third-party providers
+          (WhatsApp/Meta and your email provider) under their own terms. If you are under 18, please involve a parent
+          or guardian before contacting us. See our{' '}
+          <Link to="/privacy-policy" className="font-medium text-primary-600 hover:underline">
+            Privacy Policy
+          </Link>{' '}
+          for details on how the information you choose to share is handled.
+        </p>
+
         <h2 className="mt-8 mb-3 text-xl font-semibold text-foreground md:text-2xl">Contact Us</h2>
         <p className="text-muted leading-relaxed">
           For questions about these Terms &amp; Conditions, contact us at{' '}

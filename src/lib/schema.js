@@ -88,14 +88,20 @@ const postalAddress = () => ({ '@type': 'PostalAddress', ...siteConfig.addressPa
  *
  * Emits an `EducationalOrganization` (a schema.org subtype of `Organization`)
  * describing the institute: name, branding logo/image, description, contact
- * channels, postal address, an admissions `ContactPoint`, and the social
- * profile URLs via `sameAs`.
+ * channels, postal address, an admissions `ContactPoint`, and — only when the
+ * profiles have been verified as owned by the institute — the social profile
+ * URLs via `sameAs`.
  *
- * The `logo` uses a defensive `siteConfig.logo || siteConfig.ogImage` fallback:
- * `siteConfig` currently has no dedicated `logo` field, so the Open Graph image
- * is used, while a future `logo` field would be picked up automatically. Only
- * social `href` values are included in `sameAs` — the non-serializable `icon`
- * references are excluded.
+ * Structured-data truthfulness (review M15):
+ * - `logo` is the institute's dedicated brand logo (`siteConfig.logo`, served
+ *   from `/logo.svg`), NOT the Open Graph marketing image. The two are distinct
+ *   assets: `logo` must be a recognizable brand mark, while `image` remains the
+ *   Open Graph social-share graphic.
+ * - `sameAs` is emitted **only** when `siteConfig.socialVerified` is `true`.
+ *   Until the client confirms ownership of the social accounts, no unverified
+ *   identity links are published as machine-readable structured data. Only
+ *   social `href` values are ever mapped in — the non-serializable `icon`
+ *   references are excluded.
  *
  * @returns {object} A schema.org EducationalOrganization JSON-LD object.
  */
@@ -106,7 +112,7 @@ export function organizationSchema() {
     name: siteConfig.name,
     alternateName: siteConfig.shortName,
     url: siteConfig.siteUrl,
-    logo: absoluteUrl(siteConfig.logo || siteConfig.ogImage),
+    logo: absoluteUrl(siteConfig.logo),
     image: absoluteUrl(siteConfig.ogImage),
     description: siteConfig.description,
     email: siteConfig.email,
@@ -120,7 +126,9 @@ export function organizationSchema() {
       areaServed: 'IN',
       availableLanguage: ['en', 'hi'],
     },
-    sameAs: siteConfig.social.map((s) => s.href),
+    // Only publish verified social identities; omit the key entirely otherwise
+    // so no unverified profile is asserted as the organization's own.
+    ...(siteConfig.socialVerified ? { sameAs: siteConfig.social.map((s) => s.href) } : {}),
   }
 }
 

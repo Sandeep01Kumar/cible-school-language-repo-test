@@ -55,6 +55,54 @@ export function prefersReducedMotion() {
 }
 
 /**
+ * Reactive prefers-reduced-motion hook — the single source of truth for LIVE
+ * motion preference across the SPA.
+ *
+ * Unlike the synchronous {@link prefersReducedMotion} reader (a one-shot value
+ * captured at call time), this hook keeps the preference up to date: it
+ * subscribes to the `(prefers-reduced-motion: reduce)` media query, so toggling
+ * the OS/browser setting WHILE the page is open re-renders every consumer with
+ * the new value. That live update is what lets a mounted component react — for
+ * example, stop or restart a running carousel autoplay — instead of being stuck
+ * with the value it read on first paint.
+ *
+ * It supports both the modern `addEventListener('change')` API and the legacy
+ * `addListener` API (older Safari), is SSR-safe (initialises to false and
+ * no-ops when `window.matchMedia` is unavailable), re-syncs once inside the
+ * effect to close any gap between first render and subscription, and removes its
+ * listener on unmount. All hooks are called unconditionally at the top level, in
+ * a stable order, to satisfy the Rules of Hooks.
+ *
+ * Use this when a component must REACT to live changes; prefer the plain
+ * {@link prefersReducedMotion} helper for a one-shot read that never updates
+ * (e.g. a lazy `useState` initialiser).
+ *
+ * @returns {boolean} True when the user currently prefers reduced motion.
+ */
+export function useReducedMotion() {
+  const [reduced, setReduced] = useState(prefersReducedMotion)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined
+    }
+    const media = window.matchMedia(REDUCED_MOTION_QUERY)
+    const onChange = (event) => setReduced(event.matches)
+    // Re-sync immediately in case the value changed between the initial render
+    // and this effect running (e.g. a fast OS toggle during hydration).
+    setReduced(media.matches)
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', onChange)
+      return () => media.removeEventListener('change', onChange)
+    }
+    media.addListener(onChange)
+    return () => media.removeListener(onChange)
+  }, [])
+
+  return reduced
+}
+
+/**
  * Reveal-on-scroll hook: the first layer of the project's animation system.
  *
  * Wraps react-intersection-observer's useInView and layers in full respect for
@@ -65,14 +113,12 @@ export function prefersReducedMotion() {
  *   inView is true immediately, so content is shown at once, never hidden behind
  *   an animation and never dependent on scroll position.
  *
- * The preference is tracked in state and kept in sync at runtime: a matchMedia
- * listener updates the value if the user toggles the OS setting while the page
- * is open (supporting both the modern addEventListener API and the legacy
- * addListener API for older browsers), and the subscription is cleaned up on
- * unmount.
+ * The preference is tracked reactively via the shared {@link useReducedMotion}
+ * hook (single source of truth for live motion preference), so the value stays
+ * in sync if the user toggles the OS setting while the page is open.
  *
- * All hooks (useState, useEffect, useInView) are called unconditionally at the
- * top level, in a stable order, to satisfy the Rules of Hooks.
+ * All hooks (useReducedMotion, useInView) are called unconditionally at the top
+ * level, in a stable order, to satisfy the Rules of Hooks.
  *
  * @param {Object} [options] Optional useInView options merged OVER the defaults
  *   ({ triggerOnce: true, threshold: 0 }). Common overrides: threshold,
@@ -91,22 +137,7 @@ export function prefersReducedMotion() {
  * // />
  */
 export function useScrollReveal(options = {}) {
-  const [reduced, setReduced] = useState(prefersReducedMotion)
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return undefined
-    }
-    const media = window.matchMedia(REDUCED_MOTION_QUERY)
-    const onChange = (event) => setReduced(event.matches)
-    setReduced(media.matches)
-    if (typeof media.addEventListener === 'function') {
-      media.addEventListener('change', onChange)
-      return () => media.removeEventListener('change', onChange)
-    }
-    media.addListener(onChange)
-    return () => media.removeListener(onChange)
-  }, [])
+  const reduced = useReducedMotion()
 
   const { ref, inView } = useInView({
     ...DEFAULT_OPTIONS,

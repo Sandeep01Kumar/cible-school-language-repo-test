@@ -46,6 +46,7 @@ import Container from '../components/ui/Container.jsx'
 import SectionHeading from '../components/ui/SectionHeading.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import EventCard from '../components/common/EventCard.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import events from '../data/events.js'
 
@@ -85,6 +86,11 @@ function Events() {
             under an <h2>, keeping the outline h1 -> h2 -> h3 with no skipped
             level for assistive tech (QA Issue 9). */}
         <h2 className="sr-only">Upcoming events</h2>
+        <RepresentativeNote className="mb-8">
+          These events are representative examples shown for demonstration.
+          Dates, times and details will be confirmed by the institute before
+          launch — please check with us on WhatsApp or by phone before attending.
+        </RepresentativeNote>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
             <EventCard key={event.title} event={event} />

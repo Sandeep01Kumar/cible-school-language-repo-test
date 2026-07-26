@@ -17,9 +17,10 @@
  *   • Error     : the palette intentionally has NO red, so error affordances use
  *                 the SECONDARY (orange) scale — `border-secondary-600`,
  *                 `ring-secondary-600`, `text-secondary-700`.
- *   • Spacing   : 4 / 8px system only (`gap-2`, `py-2`, `px-3`, `ml-1`). No
- *                 arbitrary values — every class resolves to a theme token or a
- *                 native Tailwind utility.
+ *   • Spacing   : 8px scale (`gap-2` = 8px, `px-4` = 16px, `py-2` = 8px),
+ *                 matching the Input/Textarea field primitives so all form
+ *                 controls align. No arbitrary values — every class resolves to
+ *                 a theme token or a native Tailwind utility.
  *
  * react-hook-form usage:
  *   The DOM node is exposed via `ref` (React 19 ref-as-prop), and `name` /
@@ -113,7 +114,7 @@ function Select({
         aria-describedby={describedBy}
         defaultValue={placeholder ? '' : undefined}
         className={cn(
-          'w-full rounded-md border border-border bg-white px-3 py-2 text-base text-foreground shadow-sm',
+          'w-full rounded-md border border-border bg-white px-4 py-2 text-base text-foreground shadow-sm',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-1',
           'disabled:cursor-not-allowed disabled:opacity-50',
           error && 'border-secondary-600 focus-visible:ring-secondary-600',

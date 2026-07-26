@@ -36,9 +36,20 @@ import siteConfig from '../../data/siteConfig.js'
  * only fetched when it scrolls near the viewport — protecting initial load and
  * Core Web Vitals.
  *
- * Graceful degradation: if `siteConfig.mapEmbedUrl` is absent/empty, a text
- * fallback keeps the location reachable via an "Open in Google Maps" link
- * (`siteConfig.mapLink`) that opens in a new, `noopener`-isolated tab.
+ * Privacy: the iframe requests Google with `referrerPolicy="strict-origin-when-
+ * cross-origin"`, so the cross-origin request carries only this site's origin
+ * (never the full page path or query) — a deliberately stricter policy than the
+ * browser/legacy `no-referrer-when-downgrade` default.
+ *
+ * Graceful degradation: an address + "Open in Google Maps" link
+ * (`siteConfig.mapLink`, opened in a new `noopener`-isolated tab) is ALWAYS
+ * rendered as a layer BENEATH the iframe, so the location stays reachable in
+ * every failure mode. When `siteConfig.mapEmbedUrl` is absent/empty no iframe is
+ * rendered and the fallback is the sole content; when a network or privacy
+ * blocker prevents Google from loading, the iframe paints nothing and the
+ * fallback simply shows through. The embed therefore never degrades to an empty
+ * box, and the fallback link doubles as a keyboard/AT-reachable text
+ * alternative to the embedded frame.
  *
  * Accessibility (WCAG AA): the `<iframe>` always carries a descriptive `title`
  * (mandatory for assistive technology to announce the embedded frame); the
@@ -68,31 +79,36 @@ export default function GoogleMap({
       )}
       {...props}
     >
+      {/* Always-present fallback layer. Rendered BEFORE the iframe so it sits
+          beneath it in the stacking order (both are `absolute inset-0`; the
+          later sibling — the iframe — paints on top). It keeps the address and
+          an "Open in Google Maps" link reachable in every failure mode: when no
+          embed URL is configured (no iframe is rendered), and when a network or
+          privacy blocker stops Google from loading (the iframe paints nothing
+          and this layer shows through) — so the map never becomes an empty box. */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted">
+        <p>{siteConfig.address}</p>
+        {siteConfig.mapLink ? (
+          <a
+            href={siteConfig.mapLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary-600 underline underline-offset-2 hover:text-primary-700"
+          >
+            Open in Google Maps
+          </a>
+        ) : null}
+      </div>
       {siteConfig.mapEmbedUrl ? (
         <iframe
           src={siteConfig.mapEmbedUrl}
           title={title}
           loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
+          referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
-          className="absolute inset-0 h-full w-full"
-          style={{ border: 0 }}
+          className="absolute inset-0 h-full w-full border-0"
         />
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted">
-          <p>{siteConfig.address}</p>
-          {siteConfig.mapLink ? (
-            <a
-              href={siteConfig.mapLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-primary-600 underline underline-offset-2 hover:text-primary-700"
-            >
-              Open in Google Maps
-            </a>
-          ) : null}
-        </div>
-      )}
+      ) : null}
     </div>
   )
 }

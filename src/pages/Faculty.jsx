@@ -26,6 +26,10 @@
  *                        (single source of truth). Each card owns its own
  *                        photo/initials-avatar fallback and social links, so
  *                        this page stays purely presentational.
+ * - `<RepresentativeNote>` — a restrained disclosure that the faculty profiles
+ *                        are representative samples, not verified individuals
+ *                        (M03, AAP §0.7.2); it retires automatically once
+ *                        `siteConfig.representativeContent` is cleared.
  * - `<CTASection>`     — the reusable admission call-to-action that closes every
  *                        page (Fill Admission Form / Book Free Counseling /
  *                        WhatsApp / Call), keeping conversion actions reachable.
@@ -48,6 +52,7 @@ import Container from '../components/ui/Container.jsx'
 import SectionHeading from '../components/ui/SectionHeading.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import FacultyCard from '../components/common/FacultyCard.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import { faculty } from '../data/faculty.js'
 
@@ -86,6 +91,11 @@ function Faculty() {
             name is an <h3>) nests under an <h2>, keeping the outline
             h1 -> h2 -> h3 with no skipped level for assistive tech (QA Issue 9). */}
         <h2 className="sr-only">Faculty members</h2>
+        <RepresentativeNote className="mb-8">
+          The faculty profiles shown here are representative examples for
+          demonstration and are not verified individuals. They will be replaced
+          with the institute's actual team before launch.
+        </RepresentativeNote>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {faculty.map((member) => (
             <FacultyCard key={member.name} member={member} />

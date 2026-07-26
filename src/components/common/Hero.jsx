@@ -1,9 +1,7 @@
-import { motion } from 'framer-motion'
 import { FaWhatsapp, FaPhoneAlt } from 'react-icons/fa'
 import Container from '../ui/Container.jsx'
 import Button from '../ui/Button.jsx'
 import { cn } from '../../lib/cn.js'
-import { useScrollReveal, prefersReducedMotion, fadeUp, fadeIn, staggerContainer } from '../../hooks/useScrollReveal.js'
 import siteConfig from '../../data/siteConfig.js'
 import heroImg from '../../assets/hero.svg'
 
@@ -28,15 +26,19 @@ import heroImg from '../../assets/hero.svg'
  * canonical <Button> primitive (never restyled raw anchors), and the brand
  * contact values are read from siteConfig — never hardcoded.
  *
- * Animation: a subtle entrance reveal built on the project's shared animation
- * system. `useScrollReveal()` returns an `inView` flag that fully respects
- * `prefers-reduced-motion` — under reduced motion (and because the Hero sits
- * above the fold) `inView` is `true` immediately, and each motion element is
- * gated with `initial={reduce ? false : 'hidden'}` so it mounts DIRECTLY at its
- * final visible state with no enter animation at all (WCAG 2.3.3). The left
- * column is a `staggerContainer` parent whose children (`fadeUp`) reveal in
- * sequence; the illustration uses a gentle `fadeIn`. No aggressive transforms
- * are added.
+ * Performance / LCP (review M10): the Hero is entirely above the fold, so its
+ * critical content is rendered IMMEDIATELY at its final visible state — it is
+ * intentionally NOT gated behind a scroll-reveal. An earlier version wrapped the
+ * headline in framer-motion with `initial="hidden"` driven by an
+ * IntersectionObserver `inView` flag; because that flag is `false` on first
+ * paint until the observer fires asynchronously, the above-fold `<h1>` (the LCP
+ * element) was held at opacity 0 for hundreds of milliseconds. To eliminate that
+ * delay — and to keep the above-fold JavaScript cost minimal — the Hero now uses
+ * plain semantic elements (no framer-motion) so the h1, lead paragraph and CTAs
+ * paint at once. The hero image additionally declares `loading="eager"`,
+ * `fetchPriority="high"` and `decoding="async"` to signal it as high-priority.
+ * Subtle scroll-reveal animation is retained across the site's BELOW-fold
+ * sections, where it does not affect LCP.
  *
  * Design-system compliance (Tailwind v4 @theme tokens from src/index.css; the
  * project rule is ZERO hardcoded style values — every value traces to a token
@@ -76,53 +78,25 @@ function Hero({
   className,
   ...props
 }) {
-  // Single reveal hook at the top level (Rules of Hooks). `inView` drives both
-  // columns; it is true immediately above the fold and under reduced motion.
-  const { ref, inView } = useScrollReveal()
-  // Synchronous, SSR-safe read of the OS "reduce motion" preference (plain
-  // helper, not a hook). When true, each motion element mounts with
-  // `initial={false}` so it renders DIRECTLY at its final state — no enter
-  // reveal at all (WCAG 2.3.3). `useScrollReveal` re-renders on runtime toggle.
-  const reduce = prefersReducedMotion()
-
   return (
     <section className={cn('bg-surface', className)} {...props}>
       <Container className="grid items-center gap-10 py-16 md:grid-cols-2 md:py-24">
-        {/* Left column: value proposition + CTAs. Stagger parent — its children
-            inherit the visible/hidden state and reveal in sequence. */}
-        <motion.div
-          ref={ref}
-          variants={staggerContainer}
-          initial={reduce ? false : 'hidden'}
-          animate={inView ? 'visible' : 'hidden'}
-          className="flex flex-col gap-6"
-        >
-          {/* BLITZY [TOKEN-SNAP]: brief suggested `bg-primary/10` + `text-primary`,
-              which resolve to NO token in this repo (verified against the built
-              CSS). Snapped to the canonical Badge-primary pairing bg-primary-50 +
+        {/* Left column: value proposition + CTAs. Rendered immediately (no
+            scroll-reveal gating) so the above-fold h1/lead/CTAs paint at once —
+            critical for LCP (M10). Plain elements keep above-fold JS minimal. */}
+        <div className="flex flex-col gap-6">
+          {/* Eyebrow pill: canonical Badge-primary token pairing bg-primary-50 +
               text-primary-700 — both defined @theme tokens, WCAG AA ≈6.16:1. */}
-          <motion.span
-            variants={fadeUp}
-            className="inline-flex w-fit items-center rounded-full bg-primary-50 px-4 py-1 text-sm font-medium text-primary-700"
-          >
+          <span className="inline-flex w-fit items-center rounded-full bg-primary-50 px-4 py-1 text-sm font-medium text-primary-700">
             {eyebrow}
-          </motion.span>
-          <motion.h1
-            variants={fadeUp}
-            className="text-4xl font-bold leading-tight text-foreground md:text-5xl"
-          >
+          </span>
+          <h1 className="text-4xl font-bold leading-tight text-foreground md:text-5xl">
             {title}
-          </motion.h1>
-          {/* BLITZY [TOKEN-SNAP]: brief suggested `text-muted-foreground`, which
-              resolves to no token here. Snapped to `text-muted` (the defined
-              --color-muted token, ≈7.5:1 on the surface — WCAG AA). */}
-          <motion.p variants={fadeUp} className="max-w-prose text-lg text-muted">
-            {subtitle}
-          </motion.p>
-          <motion.div
-            variants={fadeUp}
-            className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"
-          >
+          </h1>
+          {/* Lead paragraph uses `text-muted` (the defined --color-muted token,
+              ≈7.5:1 on the surface — WCAG AA). */}
+          <p className="max-w-prose text-lg text-muted">{subtitle}</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {/* Primary admission CTA → internal route (react-router <Link>). */}
             <Button to="/admission" variant="primary" size="lg">
               Apply for Admission
@@ -139,25 +113,26 @@ function Hero({
               <FaPhoneAlt aria-hidden="true" className="h-4 w-4" />
               {siteConfig.phone}
             </Button>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
-        {/* Right column: brand illustration. Gentle opacity fade driven by the
-            same `inView` flag. `width`/`height` prevent layout shift (CLS). */}
-        <motion.div
-          variants={fadeIn}
-          initial={reduce ? false : 'hidden'}
-          animate={inView ? 'visible' : 'hidden'}
-          className="flex justify-center"
-        >
+        {/* Right column: brand illustration. Rendered immediately with explicit
+            high-priority hints so it is not deprioritised on the above-fold path
+            (M10). `width`/`height` reserve space to prevent layout shift (CLS).
+            The alt makes clear this is a representative ILLUSTRATION, not a photo
+            of real students (m13). */}
+        <div className="flex justify-center">
           <img
             src={heroImg}
-            alt="Students learning English and building confidence at CIBLE School of Language — speech bubbles, an open book, a graduation cap and growth charts"
+            alt="Illustration representing learning English and building confidence at CIBLE School of Language — speech bubbles, an open book, a graduation cap and growth charts"
             className="h-auto w-full max-w-lg"
             width="640"
             height="480"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
-        </motion.div>
+        </div>
       </Container>
     </section>
   )

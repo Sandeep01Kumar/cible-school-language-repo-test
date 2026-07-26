@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, A11y, Autoplay } from 'swiper/modules'
 import { FaPlay, FaPause } from 'react-icons/fa'
@@ -10,7 +10,7 @@ import 'swiper/css/autoplay'
 import ReviewCard from './ReviewCard.jsx'
 import Button from '../ui/Button.jsx'
 import { cn } from '../../lib/cn.js'
-import { prefersReducedMotion } from '../../hooks/useScrollReveal.js'
+import { useReducedMotion } from '../../hooks/useScrollReveal.js'
 import testimonials from '../../data/testimonials.js'
 
 /**
@@ -41,12 +41,16 @@ import testimonials from '../../data/testimonials.js'
  * baseline across the row.
  *
  * Motion / prefers-reduced-motion (WCAG AA — REQUIRED): autoplay advances slides
- * every 5s ONLY when the user has not requested reduced motion. When
- * `prefersReducedMotion()` is true the `autoplay` prop is `false`, so the
- * carousel makes NO automatic (non-user-initiated) movement; slide changes then
- * happen only through the user's own actions (arrows, pagination, drag/swipe),
- * which is acceptable under reduced motion. `prefersReducedMotion` is a plain
- * helper (not a hook), so it is read synchronously during render.
+ * every 5s ONLY when the user has not requested reduced motion. The preference
+ * is read REACTIVELY via the shared `useReducedMotion()` hook, so it is honoured
+ * both on first paint AND when the user toggles the OS/browser setting while the
+ * page is open. When reduced motion is preferred the `autoplay` prop is `false`
+ * AND a top-level effect explicitly STOPS Swiper's autoplay controller on the
+ * already-mounted instance (a prop change alone does not reliably halt a running
+ * controller); when motion is allowed again the effect RESTARTS it. The carousel
+ * therefore makes NO automatic (non-user-initiated) movement under reduced
+ * motion; slide changes then happen only through the user's own actions (arrows,
+ * pagination, drag/swipe), which is acceptable.
  *
  * Pause / Stop control (WCAG 2.2.2 "Pause, Stop, Hide" — REQUIRED for auto-
  * advancing content that runs longer than 5s): when autoplay is active (motion
@@ -83,7 +87,9 @@ import testimonials from '../../data/testimonials.js'
  * when it sees a new prop reference, which would otherwise glitch the carousel
  * whenever a parent (e.g. a framer-motion reveal section) re-renders. The
  * `Autoplay` module stays registered in every case; reduced motion is honoured
- * purely by passing `autoplay={false}`, keeping the prop reference stable too.
+ * by toggling the stable `autoplay` prop between the hoisted `AUTOPLAY` object
+ * and `false` AND by the explicit stop/start effect above, so no prop reference
+ * is recreated per render.
  *
  * @param {object} props
  * @param {Array<{ name: string, role?: string, course?: string, rating: number,
@@ -118,18 +124,38 @@ const A11Y = { enabled: true }
 const AUTOPLAY = { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }
 
 export default function TestimonialSlider({ items = testimonials, className, ...props }) {
-  // Plain helper (intentionally NOT named use*), safe to read synchronously
-  // during render: true when the user has requested reduced motion at the OS
-  // level. When true, autoplay is disabled so the carousel never moves on its own.
-  const reduced = prefersReducedMotion()
+  // Reactive reduced-motion (shared hook, single source of truth): re-renders
+  // this component when the OS/browser setting changes WHILE the page is open,
+  // so autoplay can be stopped/started live rather than being frozen at the
+  // value read on first paint. When true, autoplay is disabled so the carousel
+  // never moves on its own.
+  const reduced = useReducedMotion()
 
-  // Live handle to the Swiper instance so the Play/Pause toggle can drive its
-  // autoplay controller. Play/Pause reflects whether autoplay is currently
-  // running; it starts running only when motion is allowed. BOTH hooks are
-  // declared UNCONDITIONALLY at the top level — before the early return below —
-  // so hook order is stable every render (react/rules-of-hooks).
+  // Live handle to the Swiper instance so the Play/Pause toggle — and the
+  // reduced-motion effect below — can drive its autoplay controller. Play/Pause
+  // reflects whether autoplay is currently running; it starts running only when
+  // motion is allowed. ALL hooks are declared UNCONDITIONALLY at the top level —
+  // before the early return below — so hook order is stable every render
+  // (react/rules-of-hooks).
   const swiperRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(!reduced)
+
+  // React to LIVE reduced-motion changes on the ALREADY-MOUNTED carousel (m12):
+  // passing `autoplay={false}` alone does not reliably halt an autoplay
+  // controller that is already running, so drive it explicitly — stop the moment
+  // the user requests reduced motion, restart when they allow motion again.
+  // Guarded for instance/controller readiness and SSR; Swiper's autoplayStart /
+  // autoplayStop events keep `isPlaying` (and the toggle's label) in sync, so no
+  // manual state update is needed here.
+  useEffect(() => {
+    const swiper = swiperRef.current
+    if (!swiper?.autoplay) return
+    if (reduced) {
+      swiper.autoplay.stop()
+    } else {
+      swiper.autoplay.start()
+    }
+  }, [reduced])
 
   // Render nothing when there is no content — AFTER the hooks so their order
   // never changes across renders. Keeps callers free of empty-state guards.

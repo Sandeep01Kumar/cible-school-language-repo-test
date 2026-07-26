@@ -24,15 +24,17 @@
 /**
  * Practical, RFC-lite email pattern.
  *
- * Matches a local part of one or more non-space, non-`@` characters, a single
- * `@`, a domain label of one or more non-space, non-`@` characters, a literal
- * dot, and a top-level domain of one or more non-space, non-`@` characters.
- * This intentionally rejects spaces, missing dots, and empty labels while
- * staying permissive enough for real-world addresses.
+ * Matches a local part, a single `@`, a domain label, a literal dot, and a
+ * top-level domain of at least two characters. In addition to rejecting spaces
+ * and `@` inside labels, the character class explicitly excludes the angle
+ * brackets `<` and `>` so markup- or script-like strings (for example
+ * `<script>@evil.com`) can never satisfy the pattern — hardening the field
+ * against CWE-20 style injection payloads while staying permissive enough for
+ * real-world addresses. Length is bounded separately by {@link MAX_LENGTHS}.
  *
  * @type {RegExp}
  */
-export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+export const EMAIL_REGEX = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/
 
 /**
  * Ten-digit Indian mobile core pattern.
@@ -44,6 +46,73 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  * @type {RegExp}
  */
 export const PHONE_REGEX = /^[6-9]\d{9}$/
+
+/**
+ * Per-field maximum character lengths for user-entered form values.
+ *
+ * These caps prevent a single field — or the assembled WhatsApp / `mailto:`
+ * handoff URL built from them — from ballooning into a multi-thousand-character
+ * payload (the CWE-20 concern raised in review). Forms apply them both as the
+ * native `maxLength` attribute on the `<input>`/`<textarea>` (a hard UI cap)
+ * and as `react-hook-form` `maxLength` rules (a validated cap), and may use
+ * {@link truncate} as a final defensive clamp when constructing the handoff
+ * string. The `email` bound follows the RFC 5321 maximum address length.
+ *
+ * @type {Readonly<{name: number, email: number, phone: number, subject: number, message: number}>}
+ */
+export const MAX_LENGTHS = Object.freeze({
+  name: 80,
+  email: 254,
+  phone: 20,
+  subject: 120,
+  message: 1000,
+})
+
+/**
+ * Allowed-character pattern for a person's name.
+ *
+ * The value must begin with a Unicode letter and may then contain further
+ * Unicode letters, combining marks (so Devanagari and other Indic scripts with
+ * matras are accepted), spaces, and the punctuation commonly found in names —
+ * period, apostrophe, and hyphen. Digits, angle brackets, and other symbols are
+ * rejected, which blocks script-like or numeric noise while remaining
+ * script-agnostic for the institute's multilingual audience. Apply to the
+ * trimmed value; length is bounded separately by {@link MAX_LENGTHS}.
+ *
+ * @type {RegExp}
+ */
+export const NAME_REGEX = /^[\p{L}][\p{L}\p{M} .'-]*$/u
+
+/**
+ * Determine whether a value is a non-empty string once surrounding whitespace
+ * is removed.
+ *
+ * This is the trim-aware emptiness check used across the rule builders so that
+ * whitespace-only submissions (spaces, tabs, newlines) are treated as empty and
+ * rejected, closing the "whitespace-only names pass" gap identified in review.
+ *
+ * @param {unknown} value - The candidate value, typically a form field string.
+ * @returns {boolean} `true` when `value` is a string with visible characters.
+ */
+export function isNonEmpty(value) {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+/**
+ * Defensively clamp a string to at most `max` characters.
+ *
+ * Used by forms as a last-line safeguard when assembling the WhatsApp / mail
+ * handoff message, so that even if a field somehow bypassed its validated cap
+ * the outbound URL can never exceed a sane length. Non-string input yields `''`.
+ *
+ * @param {unknown} value - The value to clamp.
+ * @param {number} max - The maximum number of characters to retain.
+ * @returns {string} The original string, or its first `max` characters.
+ */
+export function truncate(value, max) {
+  if (typeof value !== 'string') return ''
+  return value.length > max ? value.slice(0, max) : value
+}
 
 /**
  * Reduce a user-entered phone string to its ten-digit subscriber core.
@@ -87,12 +156,17 @@ export function isValidEmail(value) {
  * The input is normalized with {@link normalizePhone} — accepting `+91`,
  * spaces, hyphens, parentheses, and a leading trunk `0` — and the resulting
  * ten-digit core is tested against {@link PHONE_REGEX}. Non-string input
- * normalizes to `''`, which fails the pattern and returns `false`.
+ * returns `false`. As a guard against the "overly permissive" normalization
+ * flagged in review, a raw string longer than {@link MAX_LENGTHS.phone} is
+ * rejected outright before normalization, so pathological inputs that happen to
+ * embed a valid-looking core cannot slip through.
  *
  * @param {unknown} value - The candidate phone value, typically a form field string.
  * @returns {boolean} `true` when the normalized value is a valid 10-digit mobile core.
  */
 export function isValidPhone(value) {
+  if (typeof value !== 'string') return false
+  if (value.length > MAX_LENGTHS.phone) return false
   return PHONE_REGEX.test(normalizePhone(value))
 }
 
@@ -101,12 +175,18 @@ export function isValidPhone(value) {
  *
  * Spread the result into a field's registration options to make the field
  * mandatory and surface the given message when it is empty, for example
- * `register('name', requiredRule('Name is required'))`.
+ * `register('name', requiredRule('Name is required'))`. In addition to the
+ * native `required` check (which rejects an empty string), the rule adds a
+ * trim-aware `validate` so that whitespace-only input — spaces, tabs, or
+ * newlines — is also rejected rather than accepted as a "present" value.
  *
- * @param {string} [message='This field is required'] - The message shown when the field is empty.
- * @returns {{ required: string }} A rule object consumable by `react-hook-form`.
+ * @param {string} [message='This field is required'] - The message shown when the field is empty or blank.
+ * @returns {{ required: string, validate: (value: unknown) => true | string }} A rule object consumable by `react-hook-form`.
  */
-export const requiredRule = (message = 'This field is required') => ({ required: message })
+export const requiredRule = (message = 'This field is required') => ({
+  required: message,
+  validate: (value) => isNonEmpty(value) || message,
+})
 
 /**
  * Ready-made `react-hook-form` rules for an email field.
@@ -114,12 +194,14 @@ export const requiredRule = (message = 'This field is required') => ({ required:
  * Marks the field as required and validates its content with
  * {@link isValidEmail}. The `validate` function follows the `react-hook-form`
  * contract: it returns `true` when the value is valid, or the error-message
- * string when it is not, so the form can render a field-level error.
+ * string when it is not, so the form can render a field-level error. A
+ * `maxLength` rule caps the field at {@link MAX_LENGTHS.email} characters.
  *
- * @type {{ required: string, validate: (value: unknown) => true | string }}
+ * @type {{ required: string, maxLength: { value: number, message: string }, validate: (value: unknown) => true | string }}
  */
 export const emailRules = {
   required: 'Email is required',
+  maxLength: { value: MAX_LENGTHS.email, message: `Email must be ${MAX_LENGTHS.email} characters or fewer` },
   validate: (value) => isValidEmail(value) || 'Enter a valid email address',
 }
 
@@ -129,11 +211,102 @@ export const emailRules = {
  * Marks the field as required and validates its content with
  * {@link isValidPhone}. The `validate` function returns `true` when the value
  * is a valid Indian mobile number, or the error-message string otherwise, per
- * the `react-hook-form` field-level error contract.
+ * the `react-hook-form` field-level error contract. A `maxLength` rule caps the
+ * field at {@link MAX_LENGTHS.phone} characters.
  *
- * @type {{ required: string, validate: (value: unknown) => true | string }}
+ * @type {{ required: string, maxLength: { value: number, message: string }, validate: (value: unknown) => true | string }}
  */
 export const phoneRules = {
   required: 'Phone number is required',
+  maxLength: { value: MAX_LENGTHS.phone, message: 'Phone number is too long' },
   validate: (value) => isValidPhone(value) || 'Enter a valid 10-digit Indian mobile number',
+}
+
+/**
+ * Build `react-hook-form` rules for a person's name field.
+ *
+ * Combines a required check, a {@link MAX_LENGTHS.name} length cap, and a set of
+ * named `validate` predicates that (a) reject whitespace-only input, (b) enforce
+ * the {@link NAME_REGEX} allowed-character set on the trimmed value, and (c)
+ * require at least two visible characters. Together these close the
+ * "whitespace-only names pass" and "no allowed-character validation" gaps.
+ *
+ * @param {string} [message='Enter your full name'] - Message for the empty/blank case.
+ * @returns {object} A rule object consumable by `react-hook-form`.
+ */
+export const nameRules = (message = 'Enter your full name') => ({
+  required: message,
+  maxLength: { value: MAX_LENGTHS.name, message: `Name must be ${MAX_LENGTHS.name} characters or fewer` },
+  validate: {
+    notBlank: (value) => isNonEmpty(value) || message,
+    minLength: (value) =>
+      (typeof value === 'string' && value.trim().length >= 2) || 'Name must be at least 2 characters',
+    allowedChars: (value) =>
+      (typeof value === 'string' && NAME_REGEX.test(value.trim())) ||
+      "Use letters, spaces, and . ' - only",
+  },
+})
+
+/**
+ * Build `react-hook-form` rules for a free-text subject line.
+ *
+ * Required, trim-aware (rejects whitespace-only), and capped at
+ * {@link MAX_LENGTHS.subject} characters.
+ *
+ * @param {string} [message='Enter a subject'] - Message for the empty/blank case.
+ * @returns {object} A rule object consumable by `react-hook-form`.
+ */
+export const subjectRules = (message = 'Enter a subject') => ({
+  required: message,
+  maxLength: { value: MAX_LENGTHS.subject, message: `Subject must be ${MAX_LENGTHS.subject} characters or fewer` },
+  validate: (value) => isNonEmpty(value) || message,
+})
+
+/**
+ * Build `react-hook-form` rules for a multi-line message / free-text body.
+ *
+ * By default the field is required (trim-aware) and capped at
+ * {@link MAX_LENGTHS.message} characters. Pass `{ required: false }` for an
+ * optional body that is still length-capped when present.
+ *
+ * @param {{ required?: boolean, max?: number, message?: string }} [options]
+ * @returns {object} A rule object consumable by `react-hook-form`.
+ */
+export const messageRules = ({
+  required = true,
+  max = MAX_LENGTHS.message,
+  message = 'Please enter a message',
+} = {}) => {
+  const rule = {
+    maxLength: { value: max, message: `Please keep this to ${max} characters or fewer` },
+    validate: (value) => (required ? isNonEmpty(value) || message : true),
+  }
+  if (required) rule.required = message
+  return rule
+}
+
+/**
+ * Build a `react-hook-form` allowlist ("one of") rule.
+ *
+ * Ensures the submitted value is a member of a known, server-defined set — used
+ * for the course and batch selects so a tampered or stale option cannot be
+ * submitted (the "no form-level allowlists" gap). When `required` is `true`
+ * (the default) an empty value fails; when `false`, an empty value is accepted
+ * but any non-empty value must still be a member of `allowed`.
+ *
+ * @param {Array<string>} allowed - The permitted values.
+ * @param {string} [message='Select a valid option'] - Message for an invalid/empty selection.
+ * @param {{ required?: boolean }} [options]
+ * @returns {object} A rule object consumable by `react-hook-form`.
+ */
+export const oneOfRule = (allowed, message = 'Select a valid option', { required = true } = {}) => {
+  const list = Array.isArray(allowed) ? allowed : []
+  const rule = {
+    validate: (value) => {
+      if (!required && (value === '' || value === null || value === undefined)) return true
+      return list.includes(value) || message
+    },
+  }
+  if (required) rule.required = message
+  return rule
 }

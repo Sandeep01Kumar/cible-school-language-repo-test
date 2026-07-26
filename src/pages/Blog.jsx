@@ -4,6 +4,7 @@ import Container from '../components/ui/Container.jsx'
 import SectionHeading from '../components/ui/SectionHeading.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import BlogCard from '../components/common/BlogCard.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import blog from '../data/blog.js'
 
@@ -18,8 +19,10 @@ import blog from '../data/blog.js'
  *
  * Composition (reuse-first, zero duplication — every element is a shared
  * primitive, never hand-rolled markup):
- * - `<Seo>`            : per-page head. `type="article"` sets Open Graph
- *                        `og:type=article` because this is a content page;
+ * - `<Seo>`            : per-page head. This is the blog LISTING (a collection),
+ *                        not an individual article, so it uses the default
+ *                        `og:type=website` — emitting `og:type=article` here
+ *                        would misrepresent a listing as a single article (m04);
  *                        the title resolves to "Blog | CIBLE School of Language".
  * - `<StructuredData>` : emits BreadcrumbList JSON-LD from the same `crumbs`
  *                        trail rendered visibly by `<Breadcrumbs>`, keeping the
@@ -57,7 +60,6 @@ function Blog() {
     <>
       <Seo
         title="Blog"
-        type="article"
         canonical="/blog"
         description="Read the CIBLE School of Language blog — tips on spoken English, exam preparation, personality development, computer skills and career guidance for students in Bihar."
       />
@@ -81,6 +83,11 @@ function Blog() {
             under an <h2>, keeping the outline h1 -> h2 -> h3 with no skipped
             level for assistive tech (QA Issue 9). */}
         <h2 className="sr-only">Latest articles</h2>
+        <RepresentativeNote className="mb-8">
+          These articles are representative sample content written for
+          demonstration and are not verified publications. They will be replaced
+          with the institute's own posts before launch.
+        </RepresentativeNote>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {blog.map((post) => (
             <BlogCard key={post.slug} post={post} />

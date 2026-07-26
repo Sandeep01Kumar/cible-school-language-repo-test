@@ -52,7 +52,7 @@ import courses from '../../data/courses.js'
  * Styling — 100% token-driven (Tailwind v4 @theme tokens in `src/index.css`);
  * no hardcoded values (only the exempt 0/auto/inherit/currentColor/transparent),
  * spacing on the project's 8px scale (gap-8 between sections, gap-6 grid gap,
- * gap-3 between chips). The grid is the required responsive shape:
+ * gap-2 between chips). The grid is the required responsive shape:
  * `grid gap-6 sm:grid-cols-2 lg:grid-cols-3` (1 column on mobile, 2 from `sm`,
  * 3 from `lg`), so there is never horizontal overflow.
  *
@@ -127,7 +127,7 @@ export default function CourseGrid({
         <div
           role="group"
           aria-label="Filter courses by category"
-          className="flex flex-wrap justify-center gap-3"
+          className="flex flex-wrap justify-center gap-2"
         >
           {categories.map((cat) => (
             <Button

@@ -101,6 +101,60 @@
 }
 
 /**
+ * Custom named utilities.
+ *
+ * Tailwind v4 registers utilities declared with `@utility` into the utilities
+ * layer, so they compose with every variant (`md:`, `hover:`, …) exactly like
+ * built-in utilities. These exist so components can express fixed design
+ * intents with a stable, self-documenting class name instead of an ad-hoc
+ * arbitrary-value bracket utility, keeping the utility vocabulary consistent
+ * across the codebase.
+ */
+
+/* 4:3 media box — matches the intrinsic 400×300 viewBox of the course/gallery
+   illustrations, so thumbnails fill their frame with no letter-boxing. */
+@utility aspect-4-3 {
+  aspect-ratio: 4 / 3;
+}
+
+/* Lightbox ceiling — caps an enlarged image at 85% of the viewport height so it
+   always fits on screen alongside its close affordance. */
+@utility max-h-screen-85 {
+  max-height: 85vh;
+}
+
+/* Route-progress bar stacking (M18). One step above the sticky header / mobile
+   drawer (z-50) and the floating conversion widgets (z-40) so the pending-
+   navigation bar paints over the very top edge of the header. Below the
+   skip-link (z-index 1000), which must always win when focused. */
+@utility z-route-progress {
+  z-index: 60;
+}
+
+/**
+ * Third-party overrides — Swiper pagination touch targets (M12).
+ *
+ * Swiper's default pagination bullets are only 8×8px, well below a comfortable
+ * touch target. Keep the painted dot compact but expand each bullet's tap area
+ * with transparent padding, clipping the visible fill to the content box so the
+ * dot still reads as a small circle (a 10px content box at `border-radius:50%`
+ * stays perfectly round) while the clickable/tappable box grows to ~26px — at or
+ * above the WCAG 2.5.8 AA 24px minimum. The descendant selector outranks
+ * Swiper's own single-class rule, so this wins regardless of stylesheet order,
+ * and it is intentionally OUTSIDE Tailwind's `@layer base` because Swiper's
+ * imported CSS is un-layered and would otherwise take precedence over a layered
+ * rule. Colour/opacity are left to Swiper's own variables, so active/inactive
+ * states are unchanged. Applies to every carousel (Gallery, TestimonialSlider).
+ */
+.swiper .swiper-pagination-bullet {
+  width: 0.625rem; /* 10px painted dot */
+  height: 0.625rem;
+  padding: 0.5rem; /* 8px transparent ring → 26px tap target */
+  box-sizing: content-box;
+  background-clip: content-box;
+}
+
+/**
  * Base layer — global element defaults and accessibility helpers.
  * Registered in Tailwind's `base` layer so utility classes always win.
  */

@@ -8,6 +8,7 @@ import Card from '../components/ui/Card.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import Button from '../components/ui/Button.jsx'
 import FeatureCard from '../components/common/FeatureCard.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import siteConfig from '../data/siteConfig.js'
 
@@ -27,7 +28,16 @@ import siteConfig from '../data/siteConfig.js'
  * in a new tab) and "Email Resume" (`siteConfig.emailHref`, a `mailto:` opened
  * in place). Each link is PRE-FILLED per role: the WhatsApp `?text=` and the
  * mailto `subject`/`body` name the exact position (QA Issue 13), so the
- * applicant never hands off with a blank, ambiguous message.
+ * applicant never hands off with a blank, ambiguous message. Because a `mailto:`
+ * cannot carry a file attachment, the email body explicitly asks the applicant
+ * to attach their resume manually before sending — it never claims the resume is
+ * already attached (M16).
+ *
+ * Content honesty (M03, AAP §0.7.2): the perks and openings below are polished,
+ * production-quality REPRESENTATIVE examples, not confirmed vacancies. A
+ * `RepresentativeNote` above the openings discloses this so applicants confirm
+ * current roles with the institute before applying; it retires automatically
+ * once `siteConfig.representativeContent` is cleared.
  *
  * Reuse-first (zero duplication): the page is assembled entirely from the
  * canonical primitives — <Container>, <SectionHeading>, <Breadcrumbs>, <Card>,
@@ -152,6 +162,11 @@ function Career() {
           title="Current Openings"
           subtitle="Apply in a click — send us a message on WhatsApp or email your resume."
         />
+        <RepresentativeNote className="mt-8">
+          The roles below are representative examples shown for demonstration.
+          Please confirm current vacancies with the institute on WhatsApp or by
+          phone before applying.
+        </RepresentativeNote>
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {openings.map((role) => {
             // Per-role, pre-filled deep links (QA Issue 13): each opening carries
@@ -163,7 +178,10 @@ function Career() {
             const waText = `Hello CIBLE, I would like to apply for the ${role.title} position (${role.type}, ${role.location}). Please find my details below:`
             const applyWhatsApp = `${siteConfig.whatsappHref}?text=${encodeURIComponent(waText)}`
             const emailSubject = `Job Application — ${role.title}`
-            const emailBody = `Hello CIBLE Team,\n\nI would like to apply for the ${role.title} position (${role.type}, ${role.location}).\n\nName:\nPhone:\nExperience:\n\n(My resume is attached.)\n\nThank you.`
+            // A `mailto:` link CANNOT carry a file attachment (M16), so the body
+            // must NOT claim the resume is attached. Instead it explicitly asks
+            // the applicant to attach their resume manually before sending.
+            const emailBody = `Hello CIBLE Team,\n\nI would like to apply for the ${role.title} position (${role.type}, ${role.location}).\n\nName:\nPhone:\nExperience:\n\nPlease attach your resume to this email before sending it.\n\nThank you.`
             const emailResume = `${siteConfig.emailHref}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
             return (
               <Card key={role.title} className="flex flex-col p-6">

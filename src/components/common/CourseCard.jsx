@@ -143,7 +143,7 @@ export default function CourseCard({
       {/* Media block: 4:3 illustration (matches the SVG viewBox) with a category
           badge overlaid top-left and the course icon in a floating token circle
           top-right. The image is purely decorative — the title carries meaning. */}
-      <div className="relative aspect-[4/3] w-full bg-surface">
+      <div className="relative aspect-4-3 w-full bg-surface">
         <img
           src={image}
           alt=""
@@ -164,8 +164,8 @@ export default function CourseCard({
 
       {/* Body: icon + title, duration, summary, up to three highlights, and the
           admission-oriented CTA pinned to the bottom of the card. */}
-      <div className="flex flex-1 flex-col gap-3 p-6">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-1 flex-col gap-4 p-6">
+        <div className="flex items-center gap-2">
           {Icon ? <Icon className="h-6 w-6 shrink-0 text-primary-600" aria-hidden="true" /> : null}
           <h3 className="text-lg font-semibold text-foreground">{course.title}</h3>
         </div>
@@ -182,13 +182,13 @@ export default function CourseCard({
         ) : null}
 
         {highlights.length > 0 ? (
-          <ul className="mt-1 flex flex-col gap-1">
+          <ul className="flex flex-col gap-2">
             {highlights.map((highlight, index) => (
               <li
                 key={highlight || index}
                 className="flex items-start gap-2 text-sm text-foreground"
               >
-                <FaCheck className="mt-1 shrink-0 text-accent-600" aria-hidden="true" />
+                <FaCheck className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
                 {highlight}
               </li>
             ))}

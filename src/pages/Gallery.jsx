@@ -92,7 +92,11 @@ function Gallery() {
         />
       </Container>
 
-      <Container as="section" className="pb-16 md:pb-20">
+      {/* Labelled region (m06): the gallery carousel has no heading of its own,
+          so a visually-hidden <h2> referenced via `aria-labelledby` gives the
+          section an accessible name without altering the visual design. */}
+      <Container as="section" aria-labelledby="gallery-images-heading" className="pb-16 md:pb-20">
+        <h2 id="gallery-images-heading" className="sr-only">Gallery images</h2>
         <GalleryComponent images={galleryImages} />
       </Container>
 

@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import { FaPhone, FaWhatsapp, FaEnvelope, FaMapMarkerAlt, FaClock } from 'react-icons/fa'
 import Seo from '../components/seo/Seo.jsx'
 import StructuredData from '../components/seo/StructuredData.jsx'
@@ -10,6 +11,7 @@ import ContactForm from '../components/forms/ContactForm.jsx'
 import GoogleMap from '../components/common/GoogleMap.jsx'
 import CTASection from '../components/common/CTASection.jsx'
 import siteConfig from '../data/siteConfig.js'
+import events from '../data/events.js'
 
 /**
  * Contact — the primary contact hub for the CIBLE School of Language SPA
@@ -30,9 +32,17 @@ import siteConfig from '../data/siteConfig.js'
  *
  * Single source of truth: all contact details (phone, WhatsApp/tel deep links,
  * email, address, opening hours, map embed) come from `siteConfig` — nothing is
- * hardcoded here. The click-to-call (`tel:`) and email (`mailto:`) actions open
- * in place while the WhatsApp (`https://wa.me/…`) action opens in a new tab;
- * that behaviour is owned by the `Button` primitive from the scheme of `href`.
+ * hardcoded here, including the SEO meta description, which is composed from the
+ * `siteConfig` locality/region/phone rather than duplicating those facts (m05).
+ * The click-to-call (`tel:`) and email (`mailto:`) actions open in place while
+ * the WhatsApp (`https://wa.me/…`) action opens in a new tab; that behaviour is
+ * owned by the `Button` primitive from the scheme of `href`.
+ *
+ * Event-aware entry (M22): the page's only hook is `useSearchParams`, used to
+ * read an optional `?event=<slug>` set by the Events "Register" CTAs. The slug
+ * is validated against the `events` single source of truth (an allowlist), and a
+ * matching event pre-fills the ContactForm's Subject so the event's identity
+ * survives the handoff; an unknown/absent slug is ignored.
  *
  * SEO: a unique `<Seo>` head (title → "Contact | CIBLE School of Language",
  * description, canonical `/contact`, Open Graph / Twitter) plus `<StructuredData
@@ -60,13 +70,28 @@ const crumbs = [
 ]
 
 function Contact() {
+  // Event-aware contact (M22): an Events "Register" CTA links here as
+  // `/contact?event=<slug>`. Validate the slug against the events single source
+  // of truth so ONLY a real event can pre-fill the form's Subject; any missing
+  // or hand-edited value is ignored (undefined → the form's blank default). The
+  // ContactForm keeps its Subject field in sync with this value, so navigating
+  // between different event links (or to plain /contact) never leaves a stale
+  // subject — the same integrity contract used by the Admission course preselect.
+  const [searchParams] = useSearchParams()
+  const requestedEvent = searchParams.get('event')
+  const matchedEvent = requestedEvent
+    ? events.find((event) => event.slug === requestedEvent)
+    : undefined
+  const eventSubject = matchedEvent ? `Event registration: ${matchedEvent.title}` : undefined
+
+  // Meta description derived from the single source of truth (siteConfig) rather
+  // than hardcoding the locality/phone again (m05 — no contact facts duplicated
+  // outside siteConfig).
+  const metaDescription = `Contact ${siteConfig.name} in ${siteConfig.addressParts.addressLocality}, ${siteConfig.addressParts.addressRegion}. Call ${siteConfig.phone}, message us on WhatsApp, email, or send an enquiry through our contact form.`
+
   return (
     <>
-      <Seo
-        title="Contact"
-        canonical="/contact"
-        description="Contact CIBLE School of Language, State Highway 75, Saharghat, Madhubani, Bihar. Call +91 98993 15093, message us on WhatsApp, email, or send an enquiry through our contact form."
-      />
+      <Seo title="Contact" canonical="/contact" description={metaDescription} />
       <StructuredData localBusiness breadcrumbs={crumbs} />
 
       {/* Page header */}
@@ -136,15 +161,34 @@ function Contact() {
             </Card>
           </div>
 
-          {/* Right: contact form */}
+          {/* Right: contact form. The visible <h2> names the form via
+              `aria-labelledby={headingId}` (M17), giving it a programmatic
+              accessible name and a correct outline ancestor for the form's
+              result-panel <h3>s. */}
           <div>
-            <ContactForm />
+            <h2 id="contact-form-heading" className="text-lg font-semibold text-foreground">
+              Send us a message
+            </h2>
+            <ContactForm
+              headingId="contact-form-heading"
+              defaultSubject={eventSubject}
+              className="mt-4"
+            />
           </div>
         </div>
       </Container>
 
-      {/* Map (self-wrapping) */}
-      <GoogleMap />
+      {/* Map — a labelled landmark so assistive technology announces the region
+          by name (m06). The heading is visually hidden to preserve the existing
+          full-width map design (no Container is added, so the map's width is
+          unchanged); the GoogleMap primitive owns its own responsive box and its
+          iframe/fallback carry their own accessible names. */}
+      <section aria-labelledby="contact-map-heading">
+        <h2 id="contact-map-heading" className="sr-only">
+          Our location on the map
+        </h2>
+        <GoogleMap />
+      </section>
 
       <CTASection />
     </>
