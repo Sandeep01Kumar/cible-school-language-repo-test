@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Blitzy QA/testing harness & artifacts (not part of the application source)
+blitzy/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -6,6 +6,48 @@ import RouteProgress from './components/layout/RouteProgress.jsx'
 import Spinner from './components/ui/Spinner.jsx'
 import { lazyWithRetry } from './lib/routeLoading.js'
 
+/**
+ * hasControlCharInPathname — true when a pathname resolves to any C0 control
+ * character (U+0000–U+001F) or DEL (U+007F) (QA Issue 14).
+ *
+ * A URL whose PATHNAME contains one of these — e.g. a CR/LF from `/bad%0Apath`,
+ * `/bad%0Dpath` or `/bad%0D%0Apath` — is NOT matched by React Router's catch-all
+ * `*` splat (its compiled regex has no dotAll flag, so `.` cannot cross a
+ * newline/CR), so the router logged "No routes matched." and rendered a blank
+ * page with no shell. Detecting it lets us re-point the matched location at the
+ * catch-all so the branded, noindex NotFound page renders inside the Layout
+ * shell instead. (Query/hash newlines are harmless and are intentionally NOT
+ * inspected.)
+ *
+ * IMPORTANT: browsers keep these bytes PERCENT-ENCODED in `location.pathname`
+ * (it stays literally "/bad%0Apath", not "/bad\n path"), while React Router
+ * DECODES the pathname before matching. So we must decode first and then scan —
+ * scanning the raw (still-encoded) pathname would miss `%0A`/`%0D`/`%7F` and let
+ * the blank page through. Decoding also catches an already-decoded control
+ * character (should a browser expose one) and, because a malformed
+ * percent-sequence makes `decodeURIComponent` throw and is itself never a valid
+ * route, we treat that as "route to NotFound" too. Implemented as an explicit
+ * code-point scan (not a control-character regex literal) so the intent is
+ * unmistakable and no linter control-char exception is needed.
+ *
+ * @param {string} pathname The location pathname to inspect.
+ * @returns {boolean} True when the decoded pathname holds a C0/DEL control char
+ *   (or the pathname is malformed percent-encoding).
+ */
+function hasControlCharInPathname(pathname) {
+  let decoded
+  try {
+    decoded = decodeURIComponent(pathname)
+  } catch {
+    return true
+  }
+  for (let i = 0; i < decoded.length; i += 1) {
+    const code = decoded.charCodeAt(i)
+    if (code <= 0x1f || code === 0x7f) return true
+  }
+  return false
+}
+
 /*
  * Route-level code splitting (AAP performance rule): every page below is loaded
  * with `lazyWithRetry` (a hardened `React.lazy` — see src/lib/routeLoading.js),
@@ -104,6 +146,18 @@ function App() {
     startTransition(() => setDisplayLocation(location))
   }, [location, displayLocation])
 
+  // Normalize a control-character pathname (encoded CR/LF/other C0 bytes) to the
+  // catch-all so a malformed URL renders the branded NotFound page inside the
+  // Layout shell (with the nav/footer/quick-contact recovery actions) rather
+  // than a blank screen (QA Issue 14). Only the location object handed to
+  // <Routes> is normalized — the browser's address bar is left untouched. Legit
+  // paths never contain control characters, so this is a no-op for them; the
+  // synthetic `/not-found` pathname matches no real route and therefore falls
+  // through to the `*` splat that renders <NotFound/>.
+  const routedLocation = hasControlCharInPathname(displayLocation.pathname)
+    ? { ...displayLocation, pathname: '/not-found' }
+    : displayLocation
+
   return (
     <Suspense fallback={<Spinner />}>
       {/* Pending-navigation indicator (visible bar + polite announcement). */}
@@ -119,9 +173,11 @@ function App() {
        * gate.
        */}
       <MotionConfig reducedMotion="user">
-        {/* Controlled location: routes match the COMMITTED displayLocation, so
-            the visible page changes only once its chunk has resolved (m01). */}
-        <Routes location={displayLocation}>
+        {/* Controlled location: routes match the COMMITTED displayLocation
+            (sanitized to `routedLocation` so a control-character pathname
+            resolves to NotFound, QA Issue 14), so the visible page changes only
+            once its chunk has resolved (m01). */}
+        <Routes location={routedLocation}>
           <Route element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />

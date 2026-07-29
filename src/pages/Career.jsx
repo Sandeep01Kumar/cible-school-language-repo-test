@@ -194,13 +194,22 @@ function Career() {
                 <p className="text-sm text-muted">{role.location}</p>
                 <p className="mt-3 flex-1 text-muted leading-relaxed">{role.description}</p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Button href={applyWhatsApp} aria-label={`Apply for the ${role.title} role via WhatsApp`}>
+                  {/*
+                    WCAG 2.5.3 Label in Name (QA Issue 25): the accessible name
+                    MUST begin with the control's exact VISIBLE text so speech-
+                    input users can activate it by saying what they see. The
+                    aria-label therefore leads with the verbatim visible label
+                    ("Apply via WhatsApp" / "Email Resume") and appends the role
+                    context afterwards, rather than burying the visible words
+                    mid-string.
+                  */}
+                  <Button href={applyWhatsApp} aria-label={`Apply via WhatsApp for the ${role.title} role`}>
                     Apply via WhatsApp
                   </Button>
                   <Button
                     variant="outline"
                     href={emailResume}
-                    aria-label={`Email your resume for the ${role.title} role`}
+                    aria-label={`Email Resume for the ${role.title} role`}
                   >
                     Email Resume
                   </Button>

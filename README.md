@@ -17,8 +17,10 @@ student admissions and inquiries.
 - [Pages](#pages)
 - [Contact & Brand](#contact--brand)
 - [Accessibility & SEO](#accessibility--seo)
+- [Performance & Core Web Vitals](#performance--core-web-vitals)
 - [Deployment & Hosting](#deployment--hosting)
 - [Security](#security)
+- [Launch Readiness (client-supplied configuration)](#launch-readiness-client-supplied-configuration)
 - [Limitations](#limitations)
 - [License & Notes](#license--notes)
 
@@ -44,7 +46,18 @@ and installed; patch/minor levels may float within each caret range.
 - **react-helmet-async** — per-page SEO head management (title, description,
   canonical, Open Graph, and Twitter cards).
 - **react-hook-form** — accessible, validated Admission, Contact, and Newsletter
-  forms with loading, error, empty, and success states.
+  forms. Because the site has no backend (see [Limitations](#limitations)),
+  submission is a **client-side draft handoff**, not a server post, so the forms
+  expose a small set of *honest* states rather than a manufactured
+  "loading → success" cycle. The Admission and Contact forms use **idle** (ready
+  for input, showing inline validation errors on invalid submit), **opened** (a
+  prefilled WhatsApp/email draft was opened and is awaiting the user's own Send),
+  **blocked** (the browser blocked the draft window/tab — recoverable, with a
+  direct link to reopen it), and **error** (an unexpected failure building the
+  draft); the Newsletter uses the same model without the **blocked** state
+  (**idle** / **opened** / **error**). There is deliberately **no** fake
+  "submitting"/"success" state, because nothing is sent to or stored on a server —
+  the UI never claims a message was delivered.
 - **framer-motion** + **react-intersection-observer** — subtle fade / slide /
   reveal animations triggered on scroll (respecting `prefers-reduced-motion`).
 - **react-countup** — animated statistics counters.
@@ -103,16 +116,16 @@ tokens live in `src/index.css`, and a single canonical set of primitives is comp
 across every page.
 
 ```text
-public/            robots.txt, sitemap.xml, site.webmanifest, og-image.jpg, favicon.svg
+public/            robots.txt, sitemap.xml, site.webmanifest, og-image.jpg, favicon.svg, logo.svg
 src/
-  assets/          logo, hero & course/faculty imagery
+  assets/          logo.svg, logo-white.svg, hero.svg, course-*.svg (english/science/computer/personality/career) + assets/README.md
   data/            siteConfig, navigation, courses, faculty, testimonials, faq, events, blog, stats
-  lib/             cn.js, validators.js, schema.js (JSON-LD builders)
+  lib/             cn.js, validators.js, schema.js (JSON-LD builders), dates.js (date formatting), routeLoading.js (lazy-with-retry chunk loader)
   hooks/           useScrollReveal.js
   components/
-    layout/        Layout, Navbar, Footer, ScrollToTop
+    layout/        Layout, Navbar, Footer, ScrollToTop, ErrorBoundary, RouteProgress
     ui/            Button, Card, Container, SectionHeading, Badge, Input, Textarea, Select, Accordion, Breadcrumbs, Spinner
-    common/        Hero, Statistics, CourseCard, FacultyCard, ReviewCard, Gallery, Timeline, FAQ, Newsletter, GoogleMap, CTASection, TestimonialSlider, CourseGrid, BlogCard, EventCard, FeatureCard
+    common/        Hero, Statistics, CourseCard, FacultyCard, ReviewCard, Gallery, Timeline, FAQ, Newsletter, GoogleMap, CTASection, TestimonialSlider, CourseGrid, BlogCard, EventCard, FeatureCard, RepresentativeNote
     cta/           FloatingWhatsApp, FloatingCall, StickyBottomCTA
     forms/         AdmissionForm, ContactForm
     seo/           Seo, StructuredData
@@ -186,6 +199,51 @@ this metadata is set **client-side** (via `react-helmet-async` and runtime JSON-
 injection); see [Deployment & Hosting](#deployment--hosting) for how this affects
 crawlers that do not execute JavaScript.
 
+## Performance & Core Web Vitals
+
+Performance is engineered with the techniques available to a **client-rendered**
+SPA, and the results split cleanly by device class: desktop Core Web Vitals are
+excellent, while **mobile Largest Contentful Paint (LCP)** carries the residual cost
+of client-side rendering under mobile CPU/network throttling. What the build does
+in-scope:
+
+- **Route-level code splitting.** Every one of the 17 pages (plus the 404) is a
+  `React.lazy` chunk loaded on demand behind a `<Suspense>` fallback, so a visitor
+  downloads only the route they open, not the whole site.
+- **Above-the-fold LCP is not gated behind JavaScript animation.** The hero — the
+  LCP element on most routes — renders its `<h1>`, lead paragraph, and CTAs
+  immediately as plain semantic elements (no scroll-reveal wrapper that would hold
+  the heading at `opacity: 0`), and the hero illustration is a small SVG marked
+  `loading="eager"`, `fetchpriority="high"`, `decoding="async"` with explicit
+  `width`/`height` to reserve space (no layout shift).
+- **Font delivery.** The Inter web font is `preconnect`-ed and `preload`-ed in
+  `index.html` and requested with `display=swap`, so text paints in a fallback face
+  immediately and never blocks the LCP heading on the web font.
+- **Subtle, reduced-motion-aware animation.** Reveals use `framer-motion` +
+  `react-intersection-observer` and honor `prefers-reduced-motion` globally via a
+  root `<MotionConfig reducedMotion="user">`.
+- **Layout stability (CLS).** Media reserve their box (the hero image and the
+  `aspect-video` map), and the router takes **manual** scroll restoration so a warm
+  reload cannot race late content into a layout shift.
+- **Dependency hygiene.** A previously-declared but entirely unused `aos`
+  scroll-animation package (zero imports) was removed and the lockfile regenerated,
+  trimming the install/maintenance surface. Scroll reveals are already covered by
+  `framer-motion` + `react-intersection-observer`, so no capability is lost.
+
+**Mobile LCP disposition (acceptance note).** Under Lighthouse *mobile* throttling,
+LCP for this client-rendered app lands in roughly the 3.0–3.6s range across routes
+(desktop passes at 99–100), because the browser must download, parse, and execute the
+React bundle before the hero paints — the inherent cost of client-side rendering. The
+in-scope levers above are all applied; pushing mobile LCP below the 2.5s "good"
+threshold requires **server-side rendering / prerendering (SSG)** and **host/edge
+delivery tuning** (Brotli/gzip compression, HTTP/2 or HTTP/3, a CDN, and the immutable
+asset caching described under
+[Response headers](#response-headers-host--edge-configuration)). Those are **out of
+scope for this client-only static front-end** (the app is deliberately client-rendered
+with no SSR/SSG layer) and are documented here, and under
+[Deployment & Hosting](#deployment--hosting) and [Limitations](#limitations), as the
+deploy-time path to acceptance-grade mobile LCP.
+
 ## Deployment & Hosting
 
 This is a **client-rendered single-page application (SPA)**. `npm run build` emits a
@@ -205,13 +263,35 @@ from the client-only architecture and **must be understood/configured at deploy 
 
   Without this rewrite, only the root `/` path will load reliably.
 
-- **Soft-404 (no true HTTP 404 status).** Because the same `index.html` is served for
-  every path, unmatched routes render the in-app **NotFound** page but the HTTP
-  response status is still **200**, not a real `404` — a *soft* 404. To keep these
-  pages out of the index, `NotFound` emits
-  `<meta name="robots" content="noindex, follow">`. A genuine `404` status for unknown
-  paths would require server-side logic or host configuration that this static SPA does
-  not provide.
+- **Soft-404 (no true HTTP 404 status) — requires host/edge configuration.** Because
+  the SPA history fallback (above) serves the same `index.html` for *every* path,
+  unmatched routes render the in-app **NotFound** page but the HTTP response status is
+  still **200**, not a real `404` — a *soft* 404. The **client-side behavior is already
+  correct**: `NotFound` emits `<meta name="robots" content="noindex, follow">`, sets **no
+  canonical**, and injects **no JSON-LD**, so search engines skip indexing while still
+  following the recovery links. What a static bundle **cannot** do by itself is return
+  the `404` *status code*; that is a deploy-time responsibility of the host/edge because
+  the fallback rewrite that makes deep links work is the very thing that forces a `200`.
+  Choose one of these host recipes to serve the branded NotFound content **with a genuine
+  `404` status** while keeping real routes at `200`:
+  - **Prerender / SSG at build time.** Add a prerender step (e.g. a Vite prerender/SSG
+    plugin) that emits one static HTML file per known route *and* a real `404.html`.
+    Static hosts that honor a custom 404 document (**GitHub Pages**, **AWS S3 static
+    website hosting**, **Firebase Hosting**) then serve `404.html` with a `404` status for
+    any unmatched path — no rewrite-to-`index.html` needed for those unknowns.
+  - **Edge / serverless function** (**Netlify Edge Functions**, **Vercel Edge
+    Middleware**, **Cloudflare Workers/Pages Functions**). Match the request path against
+    the canonical route list (kept in `src/data/navigation.js` and `public/sitemap.xml`):
+    serve `index.html` with `200` for a known route, and return the NotFound document with
+    an explicit `404` status for anything else. This preserves deep-link support while
+    giving unknown paths a true `404`.
+  - **Custom 404 document** on hosts that support one: point the host's "not found" handler
+    at a `404.html` (or the prerendered NotFound HTML) so unmatched paths receive a `404`
+    status instead of the `200` history-fallback.
+
+  Until one of the above is configured at the host, the app degrades gracefully (correct
+  noindex NotFound at a `200`); wiring a true `404` status is **out of scope for this
+  static front-end build** and is documented here as a deployment requirement.
 
 - **No server-side rendering or prerendering.** The app is **client-rendered only**.
   The shipped `index.html` contains an empty `#root` element hydrated by JavaScript at
@@ -251,6 +331,18 @@ third-party origins this site actually uses (Google Fonts, plus a Google Maps em
 the Contact page). Apply them at the edge and verify with a tool such as Mozilla
 Observatory or `curl -I` (the CSP is shown wrapped for readability; send it as a single
 header value):
+
+A ready-to-use [`public/_headers`](./public/_headers) file is included and copied into
+`dist/` by the build. On hosts that read it (**Netlify**, **Cloudflare Pages**) it
+applies the unambiguously-safe hardening headers below **plus the clickjacking control**
+(`X-Frame-Options: SAMEORIGIN` and CSP `frame-ancestors 'self'`) that closes the
+cross-origin framing gap, and it is inert on hosts that don't consume it (configure the
+equivalent there). The **full resource-restricting CSP** (`script-src` / `style-src` /
+`img-src` / `font-src` / `frame-src`) is intentionally left as documentation below rather
+than shipped in `_headers`, because a mis-scoped resource CSP can break the web font, the
+Maps embed, or the runtime inline styles set by Framer Motion / Swiper — enable it at the
+edge once validated against your deployed build (merging its `frame-ancestors` directive
+into the single CSP header).
 
 ```
 Content-Security-Policy: default-src 'self';
@@ -301,6 +393,45 @@ Caching & CORS:
   unmatched paths currently return a *soft* 404 (HTTP 200 with the in-app NotFound page);
   returning a true `404` status requires host/edge configuration that recognises unknown
   paths ahead of the SPA history-fallback rewrite.
+
+## Launch Readiness (client-supplied configuration)
+
+Several values in this build are **representative placeholders** that the institute
+must supply and confirm before going live. This is by design: the codebase cannot
+invent an authentic production domain, legal entity, verified social identity, precise
+map pin, or confirmed opening hours (see the AAP scope note on genuine, client-supplied
+details). They are **centralized in a single file**,
+[`src/data/siteConfig.js`](./src/data/siteConfig.js), and every consumer (the `<Seo>`
+component's canonical/Open Graph tags, the JSON-LD builders in `src/lib/schema.js`, the
+`Navbar`/`Footer`, the `GoogleMap`, and the forms) reads from there — so updating that
+one file propagates everywhere at runtime.
+
+Complete the following checklist before launch:
+
+- [ ] **Production domain (`siteConfig.siteUrl`).** Currently the placeholder
+  `https://www.cibleschool.com`. It is the canonical base URL and drives the canonical
+  link, Open Graph `og:url`, and all JSON-LD URLs. Two static files **cannot** import JS
+  and therefore inline the literal domain — keep them **byte-for-byte identical** to
+  `siteUrl` when you change it: [`public/sitemap.xml`](./public/sitemap.xml) and
+  [`public/robots.txt`](./public/robots.txt) (its `Sitemap:` line).
+- [ ] **Legal entity & contact identity.** Confirm the registered institute name,
+  address, phone, and email in `siteConfig` match the authoritative legal/contact
+  details (these feed the LocalBusiness JSON-LD and the visible contact surfaces).
+- [ ] **Social profiles (`siteConfig.social` + `siteConfig.socialVerified`).** The
+  handles are representative. Replace them with the official profile URLs, then flip
+  `socialVerified` to `true` — until then, `src/lib/schema.js` deliberately **omits** the
+  `sameAs` block so no unverified account is published as the institute's identity.
+- [ ] **Map pin & hours (`siteConfig.mapEmbedUrl` / `mapLink` / `hours`).** The map
+  currently uses a text-query embed centered on the SH75 address; replace it with the
+  precise **"Share → Embed a map"** URL from the official Google listing, and confirm the
+  opening hours.
+- [ ] **Representative content (`siteConfig.representativeContent`).** While `true`, the
+  app surfaces honest "representative content" disclosures (a footer band plus
+  point-of-claim notices). Once all imagery, copy, faculty bios, and student stories are
+  client-verified, set it to `false` to retire every notice at once.
+- [ ] **Brand & social assets.** Replace the representative artwork in
+  [`src/assets/`](./src/assets/) (logo, hero, course illustrations) and the social share
+  image [`public/og-image.jpg`](./public/og-image.jpg) with final, licensed assets.
 
 ## Limitations
 

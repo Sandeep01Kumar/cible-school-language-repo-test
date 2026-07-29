@@ -61,7 +61,7 @@ function Textarea({ id, label, error, hint, required = false, rows = 4, classNam
       {label ? (
         <label htmlFor={fieldId} className="text-sm font-medium text-foreground">
           {label}
-          {required ? <span className="ml-1 text-secondary-600" aria-hidden="true">*</span> : null}
+          {required ? <span className="ml-1 text-secondary-700" aria-hidden="true">*</span> : null}
         </label>
       ) : null}
       <textarea

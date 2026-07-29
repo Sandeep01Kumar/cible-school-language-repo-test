@@ -116,6 +116,14 @@ function About() {
             <FeatureCard key={v.title} icon={v.icon} title={v.title} description={v.description} />
           ))}
         </div>
+        {/* Locally-scoped disclosure (QA Issue 11): the mission narrative and
+            values above are representative sample copy, not verified client
+            statements, so the claim is flagged directly beside it. */}
+        <RepresentativeNote className="mt-8">
+          The mission statement and values shown here are representative sample
+          copy for demonstration, not an official statement approved by the
+          institute. Verified wording will be confirmed with CIBLE before launch.
+        </RepresentativeNote>
       </Container>
 
       {/* Journey / timeline */}

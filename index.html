@@ -28,9 +28,18 @@
       in exchange for a single, non-duplicated, per-route title.
     -->
 
-    <!-- Fonts: Inter (design-system --font-sans) -->
+    <!-- Fonts: Inter (design-system --font-sans). preconnect warms the Google
+         Fonts origins; the preload raises the stylesheet's fetch priority so the
+         font CSS arrives sooner on the critical path (QA Issue 17/21 — mobile LCP
+         / font delivery). `display=swap` keeps text visible in a fallback face
+         immediately, so the LCP <h1> never blocks on the web font. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
   </head>
   <body>

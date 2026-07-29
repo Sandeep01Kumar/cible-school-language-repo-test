@@ -43,7 +43,9 @@ import { cn } from '../../lib/cn.js'
  *   token, so error affordances standardise on the SECONDARY (orange) scale:
  *   `border-secondary-600`, focus `ring-secondary-600`, message
  *   `text-secondary-700` (AA on white) and the required `*` in
- *   `text-secondary-600`. No red/hex or arbitrary values are introduced.
+ *   `text-secondary-700`. The marker uses -700 (#c2410c ≈ 5.18:1 on white),
+ *   NOT -600 (#ea580c ≈ 3.56:1) which fails WCAG AA for this small glyph
+ *   (QA Issue 6). No red/hex or arbitrary values are introduced.
  *
  * @param {object} props
  * @param {string} [props.id] Explicit input id; auto-generated via useId when omitted.
@@ -70,7 +72,7 @@ function Input({ id, label, error, hint, required = false, type = 'text', classN
       {label ? (
         <label htmlFor={inputId} className="text-sm font-medium text-foreground">
           {label}
-          {required ? <span className="ml-1 text-secondary-600" aria-hidden="true">*</span> : null}
+          {required ? <span className="ml-1 text-secondary-700" aria-hidden="true">*</span> : null}
         </label>
       ) : null}
       <input
@@ -81,7 +83,11 @@ function Input({ id, label, error, hint, required = false, type = 'text', classN
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={cn(
-          'w-full rounded-md border border-border bg-white px-4 py-2 text-base text-foreground shadow-sm',
+          // `min-h-11` (44px) guarantees the field meets the WCAG 2.5.5/2.5.8
+          // touch-target minimum (QA Issue 6: fields were 40–42px). `py-2` on
+          // the 8px scale is retained for text rhythm; the min-height only
+          // grows the box when padding+content fall short.
+          'min-h-11 w-full rounded-md border border-border bg-white px-4 py-2 text-base text-foreground shadow-sm',
           'placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-1',
           'disabled:cursor-not-allowed disabled:opacity-50',
           error && 'border-secondary-600 focus-visible:ring-secondary-600',

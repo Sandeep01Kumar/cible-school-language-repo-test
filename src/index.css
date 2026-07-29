@@ -143,9 +143,19 @@
  * Swiper's own single-class rule, so this wins regardless of stylesheet order,
  * and it is intentionally OUTSIDE Tailwind's `@layer base` because Swiper's
  * imported CSS is un-layered and would otherwise take precedence over a layered
- * rule. Colour/opacity are left to Swiper's own variables, so active/inactive
- * states are unchanged. Applies to every carousel (Gallery, TestimonialSlider).
+ * rule. Applies to every carousel (Gallery, TestimonialSlider).
+ *
+ * Brand colour (QA Issue 6): Swiper's stylesheet ships an off-brand default
+ * accent of `#007aff` (its `--swiper-theme-color`), which drove the active
+ * pagination bullet, the navigation arrows, and the scrollbar drag. We rebind
+ * that single variable to the brand primary token so every Swiper-coloured
+ * affordance matches the design system; the active bullet therefore renders in
+ * brand blue while inactive bullets keep Swiper's default muted opacity.
  */
+.swiper {
+  --swiper-theme-color: var(--color-primary-600);
+  --swiper-pagination-color: var(--color-primary-600);
+}
 .swiper .swiper-pagination-bullet {
   width: 0.625rem; /* 10px painted dot */
   height: 0.625rem;

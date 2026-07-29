@@ -70,11 +70,19 @@ const base =
 // (secondary-500 / secondary-600 / accent-600) under white text; they fail AA
 // for normal text (secondary-600 = #ea580c is only ~3.56:1, secondary-700 =
 // #c2410c ≈ 5.18:1).
+//
+// Each variant carries an explicit `active:` (pressed) shade one step DEEPER
+// than its hover, giving a dedicated tactile pressed state (QA Issue 6) that is
+// visible during pointer-down / touch-hold and while :active on keyboard
+// activation, rather than relying on the hover shade alone. The deeper fills
+// (primary-800, secondary-900, accent-900) keep white text well above AA, and
+// the outline's active tint (primary-100) stays a light wash under primary-600
+// text. Animated by the shared `transition-colors` on the base.
 const variants = {
-  primary: 'bg-primary-600 text-white hover:bg-primary-700',
-  secondary: 'bg-secondary-700 text-white hover:bg-secondary-800',
-  accent: 'bg-accent-700 text-white hover:bg-accent-800',
-  outline: 'border-2 border-primary-600 bg-transparent text-primary-600 hover:bg-primary-50',
+  primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800',
+  secondary: 'bg-secondary-700 text-white hover:bg-secondary-800 active:bg-secondary-900',
+  accent: 'bg-accent-700 text-white hover:bg-accent-800 active:bg-accent-900',
+  outline: 'border-2 border-primary-600 bg-transparent text-primary-600 hover:bg-primary-50 active:bg-primary-100',
 }
 
 // Size steps on the 8px scale. ALL sizes are ≥44px tall (h-11 = 44px, h-12 =

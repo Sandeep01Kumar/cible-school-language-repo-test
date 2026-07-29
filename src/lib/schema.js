@@ -174,18 +174,32 @@ export function localBusinessSchema() {
  * A falsy `course` yields `null` so callers can conditionally render the
  * structured data without additional guards.
  *
- * @param {{title: string, summary: string, [key: string]: unknown}} [course]
- *   A course record; `title` and `summary` are consumed.
+ * @param {{title: string, summary: string, category?: string, [key: string]: unknown}} [course]
+ *   A course record; `title`, `summary`, and `category` are consumed.
  * @returns {object|null} A schema.org Course JSON-LD object, or `null` when no
  *   course is supplied.
  */
 export function courseSchema(course) {
   if (!course) return null
+  // Each Course carries a resolvable `url` pointing at the canonical in-app page
+  // that presents it (QA Issue 16). The three subject tracks have dedicated
+  // landing pages; 'Career' has none in the frozen route table, so it resolves
+  // to the admission page, and any unmapped category falls back to the catalog.
+  // NOTE: courseSchema is also invoked as `courses.map(courseSchema)`, so it
+  // MUST keep its single-argument signature — the landing path is derived
+  // INTERNALLY from `course.category`, never passed as a positional argument.
+  const COURSE_URL_BY_CATEGORY = {
+    English: '/spoken-english',
+    Science: '/science-coaching',
+    Computer: '/computer-courses',
+    Career: '/admission',
+  }
   return {
     '@context': SCHEMA,
     '@type': 'Course',
     name: course.title,
     description: course.summary,
+    url: absoluteUrl(COURSE_URL_BY_CATEGORY[course.category] || '/courses'),
     provider: {
       '@type': 'EducationalOrganization',
       name: siteConfig.name,

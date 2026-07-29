@@ -21,22 +21,32 @@ import { cn } from '../../lib/cn.js'
  *
  * Positioning / non-overlap contract (VALIDATION-CRITICAL — must stay in sync
  * with FloatingCall and StickyBottomCTA):
- *   • This FAB is the BOTTOM-MOST of the two floating buttons.
- *   • Mobile (< lg): `bottom-24` (96px) clears the ~60–64px-tall StickyBottomCTA
- *     bar (which is `lg:hidden` and pinned to `bottom-0`) with margin to spare.
- *   • Desktop (≥ lg): `lg:bottom-6` (24px) — the sticky bar is hidden at `lg`,
- *     so the FAB drops to the normal corner offset.
- *   • Right gutter: `right-4` (16px) mobile / `lg:right-6` (24px) desktop.
+ *   • DESKTOP-ONLY (`hidden lg:flex`). Below `lg` the mobile StickyBottomCTA bar
+ *     already surfaces Call / WhatsApp / Admission full-width, so rendering these
+ *     FABs there too stacked FIVE conversion controls on the right edge and let
+ *     the icon-only FABs cover — and mis-trigger over — underlying controls
+ *     (QA Issue 1: 105 wrong-action points). The FABs therefore appear ONLY at
+ *     `>= lg`, where the sticky bar is hidden, so exactly one set of persistent
+ *     CTAs is present at every breakpoint.
+ *   • This FAB is the BOTTOM-MOST of the two floating buttons: `bottom-6` (24px).
+ *   • Right gutter: `right-6` (24px).
  *   • `z-40` keeps it above page content but below a typical `z-50` nav drawer.
  *   • SIZING LOCK-STEP: this FAB is `h-14 w-14` (56px). The sibling FloatingCall
- *     sits directly above at `bottom-44` (mobile) / `lg:bottom-28` (desktop) and
- *     shares the same 56px size. Changing this size REQUIRES updating the
- *     sibling's offset (see FloatingCall.jsx) to preserve the non-overlap gap.
+ *     sits directly above at `bottom-28` (112px) and shares the same 56px size.
+ *     Changing this size REQUIRES updating the sibling's offset (see
+ *     FloatingCall.jsx) to preserve the non-overlap gap.
+ *   • Collision-aware suppression: the parent Layout observes the footer and
+ *     passes `suppressed` when it scrolls into view, so the FAB fades out and
+ *     leaves the tab order rather than covering the footer's legal links / final
+ *     CTAs (QA Issue 1: at 1024 the WhatsApp FAB fully covered the Terms link).
  *
  * Accessibility (WCAG AA):
  *   • Icon-only control → `aria-label` supplies the accessible name; the
  *     FaWhatsapp glyph is decorative and marked `aria-hidden`.
  *   • The 56px touch target exceeds the 44px guideline comfortably.
+ *   • When `suppressed`, the control is removed from the accessibility tree and
+ *     the tab order (`aria-hidden` + `tabIndex={-1}` + `pointer-events-none`) so
+ *     a hidden, zero-opacity control can never receive focus or a stray tap.
  *   • Visible keyboard focus via a `focus-visible` accent ring (overrides the
  *     global primary outline so the indicator matches this green control).
  *   • Contrast rationale (documented so reviewers do NOT "fix" it): the white
@@ -52,9 +62,13 @@ import { cn } from '../../lib/cn.js'
  * mergeable. `prefers-reduced-motion` is neutralised globally in src/index.css,
  * so the `transition-colors` hover micro-interaction needs no extra handling.
  *
+ * @param {object} [props]
+ * @param {boolean} [props.suppressed=false] When true, the FAB fades out and is
+ *   removed from the tab order + accessibility tree (used by Layout to clear the
+ *   footer region so the FAB never covers the footer's links / final CTAs).
  * @returns {import('react').ReactElement} A fixed-position WhatsApp deep-link anchor.
  */
-function FloatingWhatsApp() {
+function FloatingWhatsApp({ suppressed = false }) {
   // Build the wa.me deep link from siteConfig. When a pre-filled message is
   // configured, append it as a URL-encoded `?text=` query — the message
   // contains a comma, an apostrophe and spaces, so encodeURIComponent is
@@ -72,11 +86,14 @@ function FloatingWhatsApp() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with CIBLE on WhatsApp"
+      aria-hidden={suppressed ? 'true' : undefined}
+      tabIndex={suppressed ? -1 : undefined}
       className={cn(
-        'fixed bottom-24 right-4 z-40 lg:bottom-6 lg:right-6',
-        'flex h-14 w-14 items-center justify-center rounded-full',
-        'bg-accent-600 text-white shadow-lg transition-colors duration-200 hover:bg-accent-700',
+        'fixed bottom-6 right-6 z-40 hidden lg:flex',
+        'h-14 w-14 items-center justify-center rounded-full',
+        'bg-accent-600 text-white shadow-lg transition-all duration-200 hover:bg-accent-700',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2',
+        suppressed && 'pointer-events-none opacity-0',
       )}
     >
       <FaWhatsapp aria-hidden="true" className="h-7 w-7" />

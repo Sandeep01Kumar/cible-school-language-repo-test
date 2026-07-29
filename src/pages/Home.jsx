@@ -11,6 +11,7 @@ import FeatureCard from '../components/common/FeatureCard.jsx'
 import TestimonialSlider from '../components/common/TestimonialSlider.jsx'
 import FacultyCard from '../components/common/FacultyCard.jsx'
 import CTASection from '../components/common/CTASection.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import { courses } from '../data/courses.js'
 import { faculty } from '../data/faculty.js'
 
@@ -149,16 +150,27 @@ function Home() {
         </Container>
       </section>
 
-      {/* Testimonials — student/parent success stories via the shared carousel. */}
+      {/* Testimonials — representative student/parent stories via the shared
+          carousel. The subtitle deliberately avoids claiming these are verified
+          "real" reviews (QA Issue 7); a local RepresentativeNote sits directly
+          beside the carousel so a reader can never mistake the representative
+          samples for consented, verified records. The note auto-retires when the
+          client clears siteConfig.representativeContent. */}
       <Container as="section" className="py-16 md:py-20">
         <SectionHeading
           eyebrow="Success Stories"
           title="What Our Students Say"
-          subtitle="Real experiences from learners who transformed their confidence with CIBLE."
+          subtitle="Representative stories that reflect the confidence our learners aim to build with CIBLE."
         />
         <div className="mt-10">
           <TestimonialSlider />
         </div>
+        <RepresentativeNote className="mt-8">
+          The reviews shown here are representative samples created for
+          demonstration, not verified student testimonials. Real, consented
+          success stories will replace them before launch — please contact the
+          institute for references.
+        </RepresentativeNote>
       </Container>
 
       {/* Faculty preview — first three mentors, linking out to the full roster. */}

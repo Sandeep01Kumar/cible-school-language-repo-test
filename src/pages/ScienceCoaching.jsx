@@ -60,6 +60,7 @@ import StructuredData from '../components/seo/StructuredData.jsx'
 import Container from '../components/ui/Container.jsx'
 import SectionHeading from '../components/ui/SectionHeading.jsx'
 import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import CourseGrid from '../components/common/CourseGrid.jsx'
 import FeatureCard from '../components/common/FeatureCard.jsx'
 import CTASection from '../components/common/CTASection.jsx'
@@ -138,6 +139,14 @@ function ScienceCoaching() {
             ctaLabel="Apply now"
           />
         </div>
+        {/* Locally-scoped disclosure (QA Issue 11): course durations, highlights
+            and benefits on this track are representative sample details, flagged
+            beside the claim until verified with the institute. */}
+        <RepresentativeNote className="mt-8">
+          Course durations, highlights and outcomes shown here are representative
+          samples for demonstration. Please confirm the current curriculum, fees
+          and schedule with the institute before enrolling.
+        </RepresentativeNote>
       </Container>
 
       <CTASection />

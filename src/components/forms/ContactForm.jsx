@@ -69,18 +69,25 @@ import { siteConfig } from '../../data/siteConfig.js'
 // of the per-field caps, so the outbound URL can never balloon. Module-local.
 const MAX_CHANNEL_TEXT = 1600
 
+// Trim-then-clamp a single field value for the handoff body. Surrounding
+// whitespace is stripped FIRST (QA Issue 24: entered values must not carry
+// leading/trailing whitespace into the WhatsApp/email draft), then the result
+// is defensively clamped by `truncate` (M06). Non-string input yields ''.
+// Module-local (NOT exported).
+const clean = (value, max) => truncate(typeof value === 'string' ? value.trim() : '', max)
+
 // Module-local (NOT exported) so the module exposes only the default component
 // export and stays clean under `react/only-export-components`. Serialises the
 // validated field values into the plain-text body shared by both channels, with
-// each value defensively clamped by `truncate` (M06).
+// each value trimmed and length-clamped by `clean`.
 const buildMessage = (data) =>
   [
     'New Contact Message — CIBLE School of Language',
-    `Name: ${truncate(data.name, MAX_LENGTHS.name)}`,
-    `Email: ${truncate(data.email, MAX_LENGTHS.email)}`,
-    `Phone: ${truncate(data.phone, MAX_LENGTHS.phone)}`,
-    `Subject: ${truncate(data.subject, MAX_LENGTHS.subject)}`,
-    `Message: ${truncate(data.message, MAX_LENGTHS.message)}`,
+    `Name: ${clean(data.name, MAX_LENGTHS.name)}`,
+    `Email: ${clean(data.email, MAX_LENGTHS.email)}`,
+    `Phone: ${clean(data.phone, MAX_LENGTHS.phone)}`,
+    `Subject: ${clean(data.subject, MAX_LENGTHS.subject)}`,
+    `Message: ${clean(data.message, MAX_LENGTHS.message)}`,
   ].join('\n')
 
 function ContactForm({ className, headingId, defaultSubject } = {}) {

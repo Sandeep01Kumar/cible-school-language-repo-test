@@ -48,6 +48,22 @@ export const EMAIL_REGEX = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/
 export const PHONE_REGEX = /^[6-9]\d{9}$/
 
 /**
+ * Allowed-character pattern for a RAW phone string, applied BEFORE normalization.
+ *
+ * A phone entry may contain only digits, spaces, and the conventional grouping
+ * characters `+`, `(`, `)`, and `-`. This defines the explicit phone-input
+ * policy (QA Issue 24): because {@link normalizePhone} strips every non-digit,
+ * a permissive input such as `"9899a315093"` would otherwise have its embedded
+ * letter silently discarded and pass as a valid number. Rejecting any string
+ * that contains a character outside this set closes that gap while still
+ * transparently accepting real-world formats like `+91 98993-15093` or
+ * `(0)9899315093`. Apply to the trimmed value.
+ *
+ * @type {RegExp}
+ */
+export const PHONE_INPUT_REGEX = /^[\d\s+()-]+$/
+
+/**
  * Per-field maximum character lengths for user-entered form values.
  *
  * These caps prevent a single field — or the assembled WhatsApp / `mailto:`
@@ -157,17 +173,25 @@ export function isValidEmail(value) {
  * spaces, hyphens, parentheses, and a leading trunk `0` — and the resulting
  * ten-digit core is tested against {@link PHONE_REGEX}. Non-string input
  * returns `false`. As a guard against the "overly permissive" normalization
- * flagged in review, a raw string longer than {@link MAX_LENGTHS.phone} is
- * rejected outright before normalization, so pathological inputs that happen to
- * embed a valid-looking core cannot slip through.
+ * flagged in review, the raw value is rejected outright BEFORE normalization
+ * when it (a) exceeds {@link MAX_LENGTHS.phone} characters, or (b) contains any
+ * character outside the explicit {@link PHONE_INPUT_REGEX} policy set (digits,
+ * spaces, and `+ ( ) -`). Guard (b) closes the gap where an embedded letter —
+ * e.g. `"9899a315093"` — would previously be stripped by normalization and
+ * pass; such inputs are now rejected rather than silently "corrected".
  *
  * @param {unknown} value - The candidate phone value, typically a form field string.
  * @returns {boolean} `true` when the normalized value is a valid 10-digit mobile core.
  */
 export function isValidPhone(value) {
   if (typeof value !== 'string') return false
-  if (value.length > MAX_LENGTHS.phone) return false
-  return PHONE_REGEX.test(normalizePhone(value))
+  const trimmed = value.trim()
+  if (trimmed.length === 0 || trimmed.length > MAX_LENGTHS.phone) return false
+  // Explicit input policy (QA Issue 24): reject any raw string containing a
+  // character outside [digits, whitespace, + ( ) -] BEFORE normalization, so an
+  // embedded letter/symbol can never be silently discarded into a valid core.
+  if (!PHONE_INPUT_REGEX.test(trimmed)) return false
+  return PHONE_REGEX.test(normalizePhone(trimmed))
 }
 
 /**

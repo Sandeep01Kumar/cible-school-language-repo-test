@@ -57,6 +57,7 @@ import Breadcrumbs from '../components/ui/Breadcrumbs.jsx'
 import CourseGrid from '../components/common/CourseGrid.jsx'
 import FeatureCard from '../components/common/FeatureCard.jsx'
 import CTASection from '../components/common/CTASection.jsx'
+import RepresentativeNote from '../components/common/RepresentativeNote.jsx'
 import { courses } from '../data/courses.js'
 
 // Breadcrumb trail for this page. Module-local (never exported) so the file's
@@ -131,6 +132,14 @@ function SpokenEnglish() {
             ctaLabel="Apply now"
           />
         </div>
+        {/* Locally-scoped disclosure (QA Issue 11): course durations, highlights
+            and benefits on this track are representative sample details, flagged
+            beside the claim until verified with the institute. */}
+        <RepresentativeNote className="mt-8">
+          Course durations, highlights and outcomes shown here are representative
+          samples for demonstration. Please confirm the current curriculum, fees
+          and schedule with the institute before enrolling.
+        </RepresentativeNote>
       </Container>
 
       <CTASection />

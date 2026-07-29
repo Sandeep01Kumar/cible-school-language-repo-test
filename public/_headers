@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# HTTP response security headers for static hosts that read a `_headers` file
+# (Netlify, Cloudflare Pages). Vite copies this file verbatim into dist/, and it
+# is INERT on hosts that don't consume it (S3, Nginx, Apache) — configure the
+# equivalent there (see the README "Response headers" section).
+#
+# This file ships the unambiguously-safe hardening headers plus the clickjacking
+# control that fixes the reported cross-origin framing defect (QA Issue 19).
+# `frame-ancestors` only controls who may FRAME this site, so it is safe to ship
+# as-is and does NOT affect resource loading.
+#
+# The FULL resource-restricting Content-Security-Policy (script-src / style-src /
+# img-src / font-src / frame-src …) is documented in the README and should be
+# added here AFTER validating it against your deployed build, because a
+# mis-scoped resource CSP can break the web font, the Google Maps embed, or the
+# runtime inline styles that Framer Motion / Swiper set. When you add it, merge
+# the `frame-ancestors 'self'` directive below into that single CSP header
+# rather than sending two Content-Security-Policy headers.
+# ---------------------------------------------------------------------------
+/*
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Cross-Origin-Opener-Policy: same-origin-allow-popups

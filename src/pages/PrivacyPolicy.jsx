@@ -40,7 +40,7 @@ const sections = [
   },
   {
     heading: 'Third-Party Processing (WhatsApp / Meta and Email)',
-    body: 'Because your message is delivered through WhatsApp or email, your information is handled by those third parties. WhatsApp messages are processed by WhatsApp and Meta under the WhatsApp and Meta privacy policies; email is processed by your email provider and by the provider of the institute\u2019s inbox. Their handling of your data is governed by their own terms and privacy policies, which we do not control. Please review them before sending sensitive information.',
+    body: 'Because your message is delivered through WhatsApp or email, your information is handled by those third parties. When you submit a form, the details you entered are assembled into a pre-filled message and encoded into a link — a WhatsApp click-to-chat URL of the form https://wa.me/<number>?text=… or an email draft (a mailto: link) — which opens in WhatsApp or your email app on your own device. Your entered details therefore travel inside that link: they may appear in your browser\u2019s address bar and local history for that action, and they are passed to WhatsApp/Meta (or your email provider) when the app opens the draft; CIBLE itself receives them only if you choose to press send. WhatsApp messages are then processed by WhatsApp and Meta under the WhatsApp and Meta privacy policies, and email by your email provider and the provider of the institute\u2019s inbox. Their handling of your data is governed by their own terms and privacy policies, which we do not control. Please review them, and avoid including highly sensitive information in your message, before sending.',
   },
   {
     heading: 'Content Delivered by Google (Fonts and Maps)',
@@ -48,7 +48,7 @@ const sections = [
   },
   {
     heading: 'No Tracking or Analytics by CIBLE',
-    body: 'CIBLE itself does not use analytics, advertising, tracking pixels, or cookies that identify you; we build no visitor profiles and keep no server-side log of your browsing. Aside from the technical request data sent to Google when the fonts and the Contact-page map load \u2014 described in the section above \u2014 no browsing data about you is collected by this website.',
+    body: 'CIBLE itself does not use analytics, advertising, tracking pixels, or cookies that identify you, and we build no visitor profiles. Because the site is delivered as static files with no CIBLE backend, CIBLE keeps no server-side log of your browsing on any CIBLE-operated server. However, like any website, the third-party hosting or content-delivery provider that serves these files may keep standard technical access logs \u2014 for example your IP address, the time of the request and the file requested \u2014 for security, reliability and abuse-prevention purposes. Those logs are held by the hosting provider under its own terms, are not used by CIBLE to track, profile or identify you, and the specific provider will be named here when the site is formally published. Aside from that and the technical request data sent to Google when the fonts and the Contact-page map load \u2014 described in the section above \u2014 no browsing data about you is collected by this website.',
   },
   {
     heading: 'How We Use Your Information',
@@ -57,6 +57,10 @@ const sections = [
   {
     heading: 'Data Retention and Your Choices',
     body: 'Because we do not operate a server-side database, any message you send lives in WhatsApp, in your own email, and in the institute\u2019s inbox. To review, correct or remove information you have sent, contact us using the details below, or use the controls provided by WhatsApp/Meta or your email provider. You remain in control of what you choose to send.',
+  },
+  {
+    heading: 'Grievance Redressal and Complaints',
+    body: 'If you have a question, concern or complaint about how your information is handled \u2014 or if you would like information you have already sent to us corrected or removed \u2014 please contact the institute using the phone, WhatsApp or email details in the \u201CContact Us About This Policy\u201D section below, marking your message \u201CPrivacy Grievance\u201D. We will acknowledge and work in good faith to resolve genuine privacy grievances promptly. When the institute formalizes its operations, a named grievance/contact officer and a defined response timeline will be published here as required by applicable law.',
   },
   {
     heading: 'Children\u2019s Privacy',

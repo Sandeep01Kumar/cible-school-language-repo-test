@@ -100,12 +100,17 @@ const IMAGE_BY_CATEGORY = {
 // three subject tracks point at their dedicated landing pages; 'Career' has no
 // dedicated page in the frozen 17-route table, so — rather than link back to the
 // same /courses catalog the card already sits in (a self-referential dead end,
-// QA Issue 8) — it drives straight to the conversion-focused /admission page.
+// QA Issue 8) — it drives straight to the conversion-focused /admission page
+// with the specific course PRESELECTED via `?course=<title>` (read by Admission
+// through useSearchParams). The title is URL-encoded (%20 for the space) so the
+// query round-trips exactly to the course's `title`; there is a single 'Career'
+// course today ('Career Guidance'), so a static value is correct and minimal
+// (QA Issue 16).
 const ROUTE_BY_CATEGORY = {
   English: '/spoken-english',
   Science: '/science-coaching',
   Computer: '/computer-courses',
-  Career: '/admission',
+  Career: '/admission?course=Career%20Guidance',
 }
 
 export default function CourseCard({
@@ -128,8 +133,10 @@ export default function CourseCard({
   // react-icons component reference supplied via data — render, never call.
   const Icon = course.icon
 
-  // Surface at most three highlights; tolerate a missing/empty highlights array.
-  const highlights = course.highlights?.slice(0, 3) ?? []
+  // Surface up to four highlights (all courses currently define exactly four,
+  // so this renders the complete set — QA Issue 16); tolerate a missing/empty
+  // highlights array.
+  const highlights = course.highlights?.slice(0, 4) ?? []
 
   return (
     <Card
@@ -162,7 +169,7 @@ export default function CourseCard({
         ) : null}
       </div>
 
-      {/* Body: icon + title, duration, summary, up to three highlights, and the
+      {/* Body: icon + title, duration, summary, up to four highlights, and the
           admission-oriented CTA pinned to the bottom of the card. */}
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div className="flex items-center gap-2">

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useLocation } from 'react-router-dom'
 import { FaWhatsapp, FaPhoneAlt } from 'react-icons/fa'
 import Container from '../ui/Container.jsx'
 import Button from '../ui/Button.jsx'
@@ -82,6 +83,32 @@ export default function CTASection({
   // hook). When true the panel mounts with `initial={false}` and renders at its
   // final state with no fade-up reveal (WCAG 2.3.3).
   const reduce = prefersReducedMotion()
+  // Current route path, used to detect a "same-route" CTA click (QA Issue 5).
+  const { pathname } = useLocation()
+
+  // Same-route CTA behaviour (QA Issue 5): the primary/secondary CTAs route to
+  // /admission and /contact via a react-router <Link>. When the visitor is
+  // ALREADY on that route (e.g. clicking "Fill Admission Form" from the CTA at
+  // the bottom of /admission), the <Link> is a silent no-op — the URL, scroll,
+  // focus and history all stay put. This factory returns an onClick that, ONLY
+  // in that same-route case, prevents the dead navigation and instead scrolls
+  // the page's form anchor into view and moves keyboard focus to its first
+  // field, giving the CTA a real, perceivable effect with managed focus. When
+  // the target differs from the current route it does nothing and the <Link>
+  // navigates normally. The anchors (`#admission-form`, `#contact-form`) carry a
+  // `scroll-mt` so the sticky header never overlaps the revealed form heading.
+  const scrollToFormIfSameRoute = (targetPath, anchorId) => (event) => {
+    if (pathname !== targetPath) return
+    const anchor = document.getElementById(anchorId)
+    if (!anchor) return
+    event.preventDefault()
+    // Honors the CSS `scroll-behavior` token (smooth normally, `auto` under
+    // prefers-reduced-motion), so no explicit behavior is passed here.
+    anchor.scrollIntoView({ block: 'start' })
+    // Move focus to the first form control without a second, competing scroll.
+    const field = anchor.querySelector('input, select, textarea')
+    if (field) field.focus({ preventScroll: true })
+  }
 
   return (
     <section className={cn('py-16 md:py-24', className)} {...props}>
@@ -96,10 +123,20 @@ export default function CTASection({
           <h2 className="text-3xl font-bold text-foreground md:text-4xl">{title}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted">{subtitle}</p>
           <div className="mt-8 flex flex-col flex-wrap items-center justify-center gap-4 sm:flex-row">
-            <Button to="/admission" variant="primary" size="lg">
+            <Button
+              to="/admission"
+              variant="primary"
+              size="lg"
+              onClick={scrollToFormIfSameRoute('/admission', 'admission-form')}
+            >
               Fill Admission Form
             </Button>
-            <Button to="/contact" variant="secondary" size="lg">
+            <Button
+              to="/contact"
+              variant="secondary"
+              size="lg"
+              onClick={scrollToFormIfSameRoute('/contact', 'contact-form')}
+            >
               Book Free Counseling
             </Button>
             <Button href={siteConfig.whatsappHref} variant="accent" size="lg">

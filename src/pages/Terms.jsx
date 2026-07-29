@@ -57,7 +57,7 @@ const crumbs = [
 const sections = [
   {
     heading: 'Acceptance of Terms',
-    body: 'By accessing and using the CIBLE School of Language website, you agree to be bound by these Terms & Conditions. If you do not agree, please do not use this website.',
+    body: 'By accessing and using the CIBLE School of Language website, you agree to be bound by these Terms & Conditions once they are finalized and published with an effective date. Until then \u2014 as noted in the draft disclosure above \u2014 this draft is provided for information only and does not form a binding agreement. If you do not agree with the terms, please do not use this website.',
   },
   {
     heading: 'Use of the Website',
@@ -69,7 +69,7 @@ const sections = [
   },
   {
     heading: 'Intellectual Property',
-    body: 'The CIBLE School of Language name, logo, course descriptions and the original written content on this website belong to CIBLE School of Language and may not be reproduced without permission. This website also uses third-party assets under their own licenses — the icon set (react-icons, MIT License), the Inter typeface (SIL Open Font License) and representative illustrations — which remain the property of their respective owners. Rights to any genuine institute photographs added before launch rest with CIBLE School of Language.',
+    body: 'The CIBLE School of Language name and the original written content on this website are intended to belong to CIBLE School of Language and may not be reproduced without permission. Please note that the current logo, imagery and much of the copy are representative pre-launch samples that will be replaced with the institute\u2019s verified, final assets before launch; ownership of those final assets rests with CIBLE School of Language once supplied. This website also uses third-party assets under their own licenses: the react-icons library is distributed under the MIT License, while the Font Awesome Free icon glyphs it renders are \u00A9 Fonticons, Inc. and licensed under CC BY 4.0; the Inter typeface is licensed under the SIL Open Font License 1.1; and the illustrations shown are representative samples. These third-party assets remain the property of their respective owners and are used under those licenses.',
   },
   {
     heading: 'Limitation of Liability',

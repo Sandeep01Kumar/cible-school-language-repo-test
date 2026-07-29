@@ -123,8 +123,12 @@ function Admission() {
         </Container>
       </section>
 
-      {/* Admission form */}
-      <Container as="section" className="py-16 md:py-20">
+      {/* Admission form — `id="admission-form"` is the managed-focus/scroll
+          target for same-route CTAs (QA Issue 5): the CTASection "Fill Admission
+          Form" button, when clicked while already on /admission, scrolls here and
+          focuses the first field. `scroll-mt-24` (96px) keeps the sticky header
+          from overlapping the heading when the anchor lands at the viewport top. */}
+      <Container as="section" id="admission-form" className="scroll-mt-24 py-16 md:py-20">
         <SectionHeading
           eyebrow="Apply Now"
           title="Admission Form"

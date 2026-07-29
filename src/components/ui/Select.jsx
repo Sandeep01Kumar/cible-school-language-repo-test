@@ -99,7 +99,7 @@ function Select({
         <label htmlFor={fieldId} className="text-sm font-medium text-foreground">
           {label}
           {required ? (
-            <span className="ml-1 text-secondary-600" aria-hidden="true">
+            <span className="ml-1 text-secondary-700" aria-hidden="true">
               *
             </span>
           ) : null}
@@ -114,7 +114,10 @@ function Select({
         aria-describedby={describedBy}
         defaultValue={placeholder ? '' : undefined}
         className={cn(
-          'w-full rounded-md border border-border bg-white px-4 py-2 text-base text-foreground shadow-sm',
+          // `min-h-11` (44px) meets the WCAG 2.5.5/2.5.8 touch-target minimum
+          // (QA Issue 6: selects were 40–42px), matching the Input primitive so
+          // all form controls align. `py-2` (8px scale) preserves text rhythm.
+          'min-h-11 w-full rounded-md border border-border bg-white px-4 py-2 text-base text-foreground shadow-sm',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-1',
           'disabled:cursor-not-allowed disabled:opacity-50',
           error && 'border-secondary-600 focus-visible:ring-secondary-600',

@@ -35,10 +35,14 @@ const absoluteUrl = (path) => {
  * @param {string} [props.description] Meta/OG/Twitter description; falls back to `siteConfig.description`.
  * @param {string} [props.canonical] Canonical path/URL; when omitted NO canonical/og:url is emitted.
  * @param {string} [props.image] OG/Twitter image; falls back to `siteConfig.ogImage`.
+ * @param {string} [props.imageAlt] Accessible alt text for the OG/Twitter image;
+ *   falls back to `"<brand> — <tagline>"`. Emitted as `og:image:alt` and
+ *   `twitter:image:alt` so the share image is described to assistive tech and
+ *   social-card crawlers (QA Issue 16).
  * @param {'website'|'article'} [props.type='website'] Open Graph `og:type`.
  * @returns {import('react').ReactElement} A Helmet fragment of head tags.
  */
-function Seo({ title, description, canonical, image, type = 'website' }) {
+function Seo({ title, description, canonical, image, imageAlt, type = 'website' }) {
   const pageTitle = title ? `${title} | ${siteConfig.name}` : siteConfig.name
   const metaDescription = description || siteConfig.description
   // Only compute a canonical/og:url when the page explicitly supplies one.
@@ -48,6 +52,10 @@ function Seo({ title, description, canonical, image, type = 'website' }) {
   // unknown URL wrongly self-canonicalised to the homepage (QA Issue 12).
   const canonicalUrl = canonical ? absoluteUrl(canonical) : null
   const ogImage = absoluteUrl(image || siteConfig.ogImage)
+  // Accessible description of the share image for `og:image:alt` /
+  // `twitter:image:alt`; defaults to the brand name + tagline so the social
+  // card is always described to assistive tech and crawlers (QA Issue 16).
+  const ogImageAlt = imageAlt || `${siteConfig.name} \u2014 ${siteConfig.tagline}`
 
   return (
     <Helmet>
@@ -61,6 +69,7 @@ function Seo({ title, description, canonical, image, type = 'website' }) {
       <meta property="og:description" content={metaDescription} />
       {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:alt" content={ogImageAlt} />
       {/* Standard 1.91:1 share-image dimensions. Emitted here (not statically in
           index.html) so the whole OG block stays single-sourced in Helmet and
           never duplicates/conflicts across routes (M01). */}
@@ -72,6 +81,7 @@ function Seo({ title, description, canonical, image, type = 'website' }) {
       <meta name="twitter:title" content={pageTitle} />
       <meta name="twitter:description" content={metaDescription} />
       <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image:alt" content={ogImageAlt} />
     </Helmet>
   )
 }

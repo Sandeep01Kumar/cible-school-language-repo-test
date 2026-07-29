@@ -164,8 +164,14 @@ function Contact() {
           {/* Right: contact form. The visible <h2> names the form via
               `aria-labelledby={headingId}` (M17), giving it a programmatic
               accessible name and a correct outline ancestor for the form's
-              result-panel <h3>s. */}
-          <div>
+              result-panel <h3>s.
+
+              `id="contact-form"` is the managed-focus/scroll target for
+              same-route CTAs (QA Issue 5): the CTASection "Book Free Counseling"
+              button, when clicked while already on /contact, scrolls here and
+              focuses the first field. `scroll-mt-24` (96px) keeps the sticky
+              header from overlapping the "Send us a message" heading. */}
+          <div id="contact-form" className="scroll-mt-24">
             <h2 id="contact-form-heading" className="text-lg font-semibold text-foreground">
               Send us a message
             </h2>

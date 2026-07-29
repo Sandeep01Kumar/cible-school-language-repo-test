@@ -104,23 +104,33 @@ const EMAIL_SUBJECT = 'Admission Inquiry — CIBLE School of Language'
 // hard-bounded and can never become a multi-thousand-character payload.
 const MAX_CHANNEL_TEXT = 1600
 
+// Trim-then-clamp a single field value for the handoff body. Surrounding
+// whitespace is stripped FIRST (QA Issue 24: entered values must not carry
+// leading/trailing whitespace into the WhatsApp/email draft), then the result
+// is defensively clamped with `truncate` (M06). Non-string input yields ''.
+// Module-local (NOT exported).
+const clean = (value, max) => truncate(typeof value === 'string' ? value.trim() : '', max)
+
 // Compose the human-readable inquiry body from the validated field values.
-// Each interpolated value is defensively clamped with `truncate` (M06) even
-// though the fields are already validated/capped. Optional fields (batch /
-// message) are dropped when empty via `filter(Boolean)` so the message never
-// contains blank lines. Module-local (NOT exported).
-const buildMessage = (data) =>
-  [
+// Every interpolated value is trimmed and length-clamped via `clean`. Optional
+// fields (batch / message) are evaluated on their TRIMMED value so a
+// whitespace-only entry is dropped (no "Notes:" with blank content) and the
+// message never contains blank lines. Module-local (NOT exported).
+const buildMessage = (data) => {
+  const batch = clean(data.batch, MAX_LENGTHS.subject)
+  const notes = clean(data.message, MAX_LENGTHS.message)
+  return [
     'New Admission Inquiry — CIBLE School of Language',
-    `Name: ${truncate(data.fullName, MAX_LENGTHS.name)}`,
-    `Phone: ${truncate(data.phone, MAX_LENGTHS.phone)}`,
-    `Email: ${truncate(data.email, MAX_LENGTHS.email)}`,
-    `Course: ${truncate(data.course, MAX_LENGTHS.subject)}`,
-    data.batch ? `Preferred Batch: ${truncate(data.batch, MAX_LENGTHS.subject)}` : null,
-    data.message ? `Notes: ${truncate(data.message, MAX_LENGTHS.message)}` : null,
+    `Name: ${clean(data.fullName, MAX_LENGTHS.name)}`,
+    `Phone: ${clean(data.phone, MAX_LENGTHS.phone)}`,
+    `Email: ${clean(data.email, MAX_LENGTHS.email)}`,
+    `Course: ${clean(data.course, MAX_LENGTHS.subject)}`,
+    batch ? `Preferred Batch: ${batch}` : null,
+    notes ? `Notes: ${notes}` : null,
   ]
     .filter(Boolean)
     .join('\n')
+}
 
 function AdmissionForm({ className, defaultCourse } = {}) {
   // --- Hooks: ALL declared at the top level, before any conditional return,

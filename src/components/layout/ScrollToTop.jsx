@@ -19,7 +19,10 @@ import { useLocation } from 'react-router-dom'
  *   outside a browser; at runtime in this Vite SPA `window` always exists, so
  *   the guard is purely defensive and lint-clean.
  *
- * Scope: pathname-change scroll-to-top only. It intentionally does NOT handle
+ * Scope: pathname-change scroll-to-top, plus taking manual control of the
+ * browser History `scrollRestoration` (set to `'manual'` on mount) so the
+ * browser's automatic scroll restore cannot race this component on reload and
+ * cause a late layout shift (QA Issue 20). It intentionally does NOT handle
  * hash anchors or scroll-to-element behaviour.
  *
  * Requirements:
@@ -32,6 +35,20 @@ import { useLocation } from 'react-router-dom'
  */
 function ScrollToTop() {
   const { pathname } = useLocation()
+
+  // Take manual control of scroll restoration once, on mount. By default the
+  // browser attempts to restore the previous scroll position on reload/history
+  // navigation; on a warm reload of a long page (e.g. Contact) that restore
+  // races this component's scroll-to-top and the late footer layout, producing
+  // a large, intermittently-counted footer layout shift (CLS ~0.8 — QA Issue
+  // 20). Setting `scrollRestoration = 'manual'` hands scroll positioning to
+  // this component alone, eliminating the race. Guarded for environments and
+  // browsers that do not implement the History `scrollRestoration` API.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+  }, [])
 
   useEffect(() => {
     const prefersReduced =

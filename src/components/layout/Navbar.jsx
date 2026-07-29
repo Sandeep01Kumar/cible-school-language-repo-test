@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import { FaBars, FaTimes, FaPhoneAlt } from 'react-icons/fa'
 import Container from '../ui/Container.jsx'
 import Button from '../ui/Button.jsx'
@@ -87,13 +87,21 @@ import logo from '../../assets/logo.svg'
 
 // Module-scope active-link class builder shared by the desktop and mobile
 // `NavLink`s. React Router calls it with `{ isActive }`; the active route gets
-// the deeper primary token, the rest get foreground text with a primary hover.
-// Not exported (the file exposes only the Navbar component) — module-scope
-// `const` is permitted by oxlint `allowConstantExport`.
+// the deeper primary token PLUS non-colour cues, the rest get foreground text
+// with a primary hover. Not exported (the file exposes only the Navbar
+// component) — module-scope `const` is permitted by oxlint `allowConstantExport`.
+//
+// Non-colour active affordance (QA Issue 6 / WCAG 1.4.1 Use of Colour): the
+// active link is distinguished not by colour alone but also by a heavier weight
+// (`font-semibold`) and a visible brand underline (`underline decoration-2
+// underline-offset-8`), so users who cannot perceive the blue/foreground colour
+// difference can still identify the current page.
 const navLinkClass = ({ isActive }) =>
   cn(
     'inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium transition-colors',
-    isActive ? 'text-primary-700' : 'text-foreground hover:text-primary-600'
+    isActive
+      ? 'font-semibold text-primary-700 underline decoration-2 underline-offset-8'
+      : 'text-foreground hover:text-primary-600'
   )
 
 function Navbar({ className }) {
@@ -103,6 +111,29 @@ function Navbar({ className }) {
   const [open, setOpen] = useState(false)
   const drawerRef = useRef(null)
   const toggleRef = useRef(null)
+  // The committed route path. Closing the drawer whenever it changes fixes the
+  // "drawer stays open after Back/Forward" defect (QA Issue 3): a NavLink click
+  // already calls setOpen(false), but browser history navigation (Back/Forward)
+  // does not, previously leaving the drawer open over the new page with `#root`
+  // still `inert` and body scroll still locked. Setting `open` false here runs
+  // the drawer effect's cleanup, which restores scroll, clears `inert` and
+  // returns focus. (Runs on mount too, where it is a harmless no-op.)
+  const { pathname } = useLocation()
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
+
+  // bfcache defence-in-depth (QA Issue 3): when the page is restored from the
+  // back/forward cache its frozen JS state (a possibly-open drawer) comes back
+  // without a pathname change, so the effect above would not fire. A `pageshow`
+  // with `persisted` means a bfcache restore — force the drawer closed then too.
+  useEffect(() => {
+    const onPageShow = (event) => {
+      if (event.persisted) setOpen(false)
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
 
   // Drawer behaviour, wired only while `open`: initial focus, Esc-to-close, a
   // Tab focus trap, body scroll lock, and — on cleanup — listener removal,
@@ -275,7 +306,13 @@ function Navbar({ className }) {
               role="dialog"
               aria-modal="true"
               aria-label="Site menu"
-              className="absolute right-0 top-0 flex h-full w-72 max-w-full flex-col gap-2 bg-white p-6 shadow-md"
+              // `overflow-y-auto` makes the panel scroll when its content is
+              // taller than the viewport — the fix for short-landscape screens
+              // (e.g. 844×390 / 740×360) where the links + call action +
+              // Admission CTA exceeded the height and were unreachable while the
+              // body was scroll-locked (QA Issue 4). `overscroll-contain` keeps
+              // that scroll from chaining to the locked page behind it.
+              className="absolute right-0 top-0 flex h-full w-72 max-w-full flex-col gap-2 overflow-y-auto overscroll-contain bg-white p-6 shadow-md"
             >
               <button
                 type="button"

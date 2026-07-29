@@ -128,11 +128,18 @@ export default function Newsletter({
         </p>
       ) : null}
 
+      {/* Controls STACK vertically at every width (QA Issue 2). This block is
+          consumed ONLY inside the Footer's narrow `lg:col-span-3` (~25%) column;
+          a viewport-based `sm:flex-row` previously fired there even though the
+          CONTAINER is narrow, squeezing the field to ~65px at 1024 / ~76px at
+          1440 and overflowing Subscribe. A full-width stacked field + full-width
+          Subscribe button stays readable/editable at every width regardless of
+          the container, and is the idiomatic newsletter layout in a footer. */}
       <form
         noValidate
         aria-label="Subscribe to the newsletter"
         onSubmit={handleSubmit(onSubmit)}
-        className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start"
+        className="mt-4 flex flex-col gap-3"
       >
         <Input
           id={fieldId}
@@ -143,14 +150,13 @@ export default function Newsletter({
           autoComplete="email"
           maxLength={MAX_LENGTHS.email}
           error={errors.email?.message}
-          className="flex-1"
           {...emailField}
           onChange={(event) => {
             submittingRef.current = false
             return emailField.onChange(event)
           }}
         />
-        <Button type="submit" variant="primary">
+        <Button type="submit" variant="primary" className="w-full">
           Subscribe
         </Button>
       </form>

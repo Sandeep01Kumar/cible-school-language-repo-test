@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
@@ -130,6 +130,15 @@ function Layout() {
   const mainRef = useRef(null)
   const announcerRef = useRef(null)
   const previousPathnameRef = useRef(pathname)
+  // Footer-collision state for the DESKTOP floating conversion widgets (QA
+  // Issue 1). The FABs are `hidden lg:flex` (desktop-only); when the footer
+  // scrolls into view they would otherwise cover its legal links / final CTAs
+  // (at 1024 the WhatsApp FAB fully covered the Terms link). An
+  // IntersectionObserver on the footer flips this flag, which is passed as
+  // `suppressed` so the FABs fade out and leave the tab order while the footer
+  // is on screen, then return as the visitor scrolls back up.
+  const footerRef = useRef(null)
+  const [footerVisible, setFooterVisible] = useState(false)
 
   useEffect(() => {
     // No-op on the initial render (and on React StrictMode's dev remount, where
@@ -157,6 +166,24 @@ function Layout() {
     })
     return () => window.cancelAnimationFrame(frame)
   }, [pathname])
+
+  // Observe the footer so the desktop floating widgets can step aside when it
+  // enters the viewport (QA Issue 1 — the fixed FABs otherwise covered the
+  // footer's legal links / final CTAs). Runs once; `IntersectionObserver` is
+  // guarded so the component stays safe if ever evaluated without it, and the
+  // observer is disconnected on unmount to avoid a leak.
+  useEffect(() => {
+    const footer = footerRef.current
+    if (!footer || typeof IntersectionObserver === 'undefined') return undefined
+    const observer = new IntersectionObserver(
+      ([entry]) => setFooterVisible(entry.isIntersecting),
+      // A small negative bottom margin means the flag flips just as the footer
+      // reaches the lower edge, so the FABs never visually clip the footer.
+      { root: null, threshold: 0, rootMargin: '0px 0px -64px 0px' },
+    )
+    observer.observe(footer)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground shell-bottom-clearance">
@@ -202,8 +229,10 @@ function Layout() {
         </Suspense>
       </main>
 
-      {/* Layout owns the contentinfo landmark; Footer's own root is a <div>. */}
-      <footer>
+      {/* Layout owns the contentinfo landmark; Footer's own root is a <div>.
+          The ref feeds the IntersectionObserver that suppresses the desktop
+          floating widgets while the footer is on screen (QA Issue 1). */}
+      <footer ref={footerRef}>
         <Footer />
       </footer>
 
@@ -213,10 +242,15 @@ function Layout() {
           The <aside> is statically positioned (no transform/filter/z-index), so
           it creates no stacking context: each child stays self-positioned
           (fixed) at z-40 and the mobile drawer (z-50) still paints above them.
-          StickyBottomCTA auto-hides at lg. */}
+          Breakpoint split (QA Issue 1): the two icon FABs are DESKTOP-ONLY
+          (`hidden lg:flex`) and the StickyBottomCTA bar is MOBILE-ONLY
+          (`lg:hidden`), so exactly ONE set of persistent CTAs shows at any
+          breakpoint — never both stacked on the mobile right edge. On desktop
+          the FABs additionally step aside (`suppressed`) while the footer is in
+          view so they never cover its links/CTAs. */}
       <aside aria-label="Quick contact actions">
-        <FloatingWhatsApp />
-        <FloatingCall />
+        <FloatingWhatsApp suppressed={footerVisible} />
+        <FloatingCall suppressed={footerVisible} />
         <StickyBottomCTA />
       </aside>
     </div>
