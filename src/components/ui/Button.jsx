@@ -32,6 +32,11 @@ import { cn } from '../../lib/cn.js'
  * `outline` variant renders primary-600 text on a transparent surface with a
  * primary-50 hover tint. (secondary-600 = #ea580c is only ~3.56:1 under white
  * text and fails AA, so the secondary fill starts at -700 = #c2410c ≈ 5.18:1.)
+ * `ghost` is the quiet tertiary treatment for lower-priority Call / WhatsApp /
+ * contact actions — primary-700 text on a transparent surface, no border and no
+ * elevation, for LIGHT surfaces only. The three filled variants additionally
+ * raise to the project `shadow-lg` elevation token on hover, so a filled CTA
+ * reads as the interactive step without any layout-shifting transform.
  * Sizes sit on the 8px scale and EVERY size is at least 44px tall — sm/md
  * (44px) and lg (48px) — plus a `min-w-11` floor on the shared base, so all
  * renderings (including icon-only) meet the WCAG 2.5.5/2.5.8 touch-target
@@ -45,7 +50,7 @@ import { cn } from '../../lib/cn.js'
  * accessible name.
  *
  * @param {object} props
- * @param {'primary'|'secondary'|'accent'|'outline'} [props.variant='primary'] Visual style.
+ * @param {'primary'|'secondary'|'accent'|'outline'|'ghost'} [props.variant='primary'] Visual style.
  * @param {'sm'|'md'|'lg'} [props.size='md'] Control height / padding on the 8px scale.
  * @param {string} [props.to] Internal route path → renders a react-router <Link>.
  * @param {string} [props.href] URL → renders an <a>; external http(s) opens in a new tab.
@@ -62,19 +67,34 @@ import { cn } from '../../lib/cn.js'
 // `min-h-11 min-w-11` guarantees a ≥44×44px hit area on EVERY rendering
 // (including icon-only buttons and the compact `sm` size), satisfying the WCAG
 // 2.5.5 / 2.5.8 touch-target guideline for the canonical control.
+// The bare `transition` (not `transition-colors`) also covers box-shadow, so
+// the filled variants' `hover:shadow-lg` — and the ring-based focus indicator —
+// ease in instead of snapping; tailwind-merge collapses every `transition-*`
+// utility into one conflict group, so `-colors` and `-shadow` cannot be paired.
 const base =
-  'inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+  'inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
 
 // Variant fills — locked to AA-compliant shades (see the WCAG note above and
 // the guidance block in src/index.css). Do NOT substitute lighter shades
 // (secondary-500 / secondary-600 / accent-600) under white text; they fail AA
 // for normal text (secondary-600 = #ea580c is only ~3.56:1, secondary-700 =
 // #c2410c ≈ 5.18:1).
+// Only the three FILLED variants take the project `shadow-lg` token on hover
+// (the "interactive" step of the elevation scale in src/index.css); `outline`
+// and `ghost` stay deliberately flat, and no variant carries a resting shadow,
+// so nothing about the buttons' resting appearance or layout changes.
 const variants = {
-  primary: 'bg-primary-600 text-white hover:bg-primary-700',
-  secondary: 'bg-secondary-700 text-white hover:bg-secondary-800',
-  accent: 'bg-accent-700 text-white hover:bg-accent-800',
+  primary: 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg',
+  secondary: 'bg-secondary-700 text-white hover:bg-secondary-800 hover:shadow-lg',
+  accent: 'bg-accent-700 text-white hover:bg-accent-800 hover:shadow-lg',
   outline: 'border-2 border-primary-600 bg-transparent text-primary-600 hover:bg-primary-50',
+  // Quiet tertiary action, AA-safe by construction: primary-700 (#1d4ed8) clears
+  // AA for normal text on `background` (#ffffff) and on `surface` (#f8fafc), and
+  // on the primary-50 (#eff6ff) hover tint it is the same ≈6.16:1 pairing that
+  // Badge's `primary` variant already ships. CAUTION: light surfaces only —
+  // primary-700 fails AA on a dark fill such as primary-900 (#1e3a8a), so the
+  // primary-900 Footer must not reach for `ghost`.
+  ghost: 'bg-transparent text-primary-700 hover:bg-primary-50',
 }
 
 // Size steps on the 8px scale. ALL sizes are ≥44px tall (h-11 = 44px, h-12 =

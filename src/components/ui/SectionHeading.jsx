@@ -29,7 +29,7 @@ import { cn } from '../../lib/cn.js'
  * @param {string} [props.eyebrow] - Optional uppercase kicker label above the title.
  * @param {import('react').ReactNode} props.title - Main heading content (required in practice).
  * @param {import('react').ReactNode} [props.subtitle] - Optional supporting paragraph.
- * @param {'h2' | 'h3'} [props.as='h2'] - Heading element to render, to keep the outline logical.
+ * @param {'h1' | 'h2' | 'h3'} [props.as='h2'] - Heading element to render, to keep the outline logical; pages pass `'h1'` for their single page-level heading.
  * @param {'center' | 'left'} [props.align='center'] - Text alignment of the block.
  * @param {string} [props.className] - Extra classes merged after the defaults.
  * @returns {import('react').ReactElement} The rendered heading block.
@@ -38,7 +38,7 @@ function SectionHeading({ eyebrow, title, subtitle, as: Component = 'h2', align 
   return (
     <div
       className={cn(
-        'max-w-2xl',
+        'max-w-2xl xl:max-w-3xl',
         align === 'center' ? 'mx-auto text-center' : 'text-left',
         className,
       )}
@@ -49,7 +49,7 @@ function SectionHeading({ eyebrow, title, subtitle, as: Component = 'h2', align 
           {eyebrow}
         </p>
       ) : null}
-      <Component className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+      <Component className="text-3xl font-bold tracking-tight text-foreground md:text-4xl xl:text-5xl">
         {title}
       </Component>
       {subtitle ? (

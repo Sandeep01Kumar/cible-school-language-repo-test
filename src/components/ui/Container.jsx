@@ -20,6 +20,7 @@ import { cn } from '../../lib/cn.js'
  * - `max-w-7xl`   — caps content width at the native 80rem (1280px) token.
  * - `px-4`        — 16px inline gutters on mobile.
  * - `md:px-6`     — 24px inline gutters from the `md` breakpoint (768px) up.
+ * - `xl:px-8`     — 32px shared desktop gutters from the `xl` breakpoint (1280px) up.
  * All values resolve to native Tailwind tokens/utilities — there are no
  * hardcoded pixel widths and no arbitrary `[..]` values.
  *
@@ -41,7 +42,7 @@ import { cn } from '../../lib/cn.js'
  */
 function Container({ as: Component = 'div', className, children, ...props }) {
   return (
-    <Component className={cn('mx-auto w-full max-w-7xl px-4 md:px-6', className)} {...props}>
+    <Component className={cn('mx-auto w-full max-w-7xl px-4 md:px-6 xl:px-8', className)} {...props}>
       {children}
     </Component>
   )

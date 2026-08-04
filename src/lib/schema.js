@@ -165,17 +165,21 @@ export function localBusinessSchema() {
  * Build a Course structured-data object for a single course.
  *
  * The `course` argument comes from `src/data/courses.js` and has the shape
- * `{ slug, title, category, summary, duration, highlights: string[], icon }`.
+ * `{ slug, title, category, summary, duration, eligibility, highlights: string[], icon }`.
  * The builder maps `course.title` to `name` and `course.summary` to
  * `description`, and attaches the institute as the `provider`
  * (`EducationalOrganization`). The non-serializable `course.icon` reference is
  * never included.
  *
+ * `course.eligibility` becomes `coursePrerequisites`, falling back to
+ * `undefined` rather than `''` or `null` so that `JSON.stringify` omits the key
+ * entirely for a record that has no eligibility text.
+ *
  * A falsy `course` yields `null` so callers can conditionally render the
  * structured data without additional guards.
  *
- * @param {{title: string, summary: string, [key: string]: unknown}} [course]
- *   A course record; `title` and `summary` are consumed.
+ * @param {{title: string, summary: string, eligibility?: string, [key: string]: unknown}} [course]
+ *   A course record; `title`, `summary` and optional `eligibility` are consumed.
  * @returns {object|null} A schema.org Course JSON-LD object, or `null` when no
  *   course is supplied.
  */
@@ -186,6 +190,7 @@ export function courseSchema(course) {
     '@type': 'Course',
     name: course.title,
     description: course.summary,
+    coursePrerequisites: course.eligibility || undefined,
     provider: {
       '@type': 'EducationalOrganization',
       name: siteConfig.name,
