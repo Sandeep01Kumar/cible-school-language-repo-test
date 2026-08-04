@@ -4,43 +4,31 @@
  *
  * Single source of truth for the four stages a learner moves through at the
  * institute: naming a goal, learning with a teacher, practising in real
- * contexts, and planning what to take up next. Consumed by
- * src/components/common/Timeline.jsx.
+ * contexts, and planning what to take up next. Intended for the Success Stories
+ * journey band, rendered through the existing shared <Timeline>.
  *
- * CONTENT NOTICE (AAP §0.6.5 / §0.7.4): this sequence is an ILLUSTRATIVE
- * LEARNING PATHWAY — it is NOT a verified individual student record and it
- * promises no outcome. The copy is deliberately process-oriented (what a learner
- * does and what the institute provides at each stage) and therefore names no
- * date, duration, credential, ranking or individual. The matching VISIBLE
- * disclosure is supplied by the consuming page through
- * src/components/common/RepresentativeNote.jsx, which self-gates on
- * `siteConfig.representativeContent` and retires automatically once the client
- * clears that flag — so the wording lives with the page, never here.
+ * CONTENT NOTICE: the sequence is an ILLUSTRATIVE LEARNING PATHWAY, not a
+ * verified individual student record, so the copy stays process-oriented (what a
+ * learner does and what the institute provides) and names no date, duration,
+ * credential, ranking or individual. The matching VISIBLE disclosure belongs to
+ * the consuming page — <RepresentativeNote>, which self-gates on
+ * `siteConfig.representativeContent` — and must not be duplicated here.
  *
- * Pure ESM data module — exports constants only (no JSX / no React / no hook /
- * no side effect). Rendered by src/pages/SuccessStories.jsx as
- * `<Timeline items={successMilestones} />`; that component owns ALL presentation
- * (the rail, the marker disc, the icon size) and all reveal/reduced-motion
- * behaviour, so no Tailwind class, color or size appears below.
+ * Pure ESM data module — constants only, no JSX and no side effect. <Timeline>
+ * owns all presentation and reveal behaviour, so no Tailwind class, color or
+ * size appears below.
  *
- * Per-item shape (exactly the contract <Timeline> reads — adding a field it does
- * not consume would be dead data):
- *   {
- *     title:       string   REQUIRED short step label rendered as an <h3>.
- *                           <Timeline> also uses it as the React `key`, so every
- *                           title MUST be unique or the list keys collide.
- *     description: string   REQUIRED one-sentence supporting copy. It renders in
- *                           a narrow `text-sm` paragraph beside a 32px gutter,
- *                           so one sentence keeps it readable at 320px.
- *     icon:        IconType react-icons component REFERENCE (never JSX). It is
- *                           rendered inside a marker that <Timeline> marks
- *                           `aria-hidden="true"`, so each icon is DECORATIVE and
- *                           the title/description alone must carry the meaning.
- *   }
- *
- * Array ORDER is the displayed sequence: <Timeline> emits a semantic <ol>, so
- * assistive technology announces the position natively and the marker already
- * shows it. No entry therefore encodes a step number or an ordinal.
+ * Per-item shape `{ title, description, icon }` — exactly the contract
+ * <Timeline> reads; a field it does not consume would be dead data:
+ *   • `title` renders as an <h3> AND is used as the React `key`, so every title
+ *     must be unique.
+ *   • `description` stays one sentence: it renders as small supporting copy on a
+ *     narrow rail, so more would not read cleanly at 320px.
+ *   • `icon` is a react-icons component REFERENCE (never JSX) rendered inside an
+ *     `aria-hidden` marker, so it is DECORATIVE — the title and description
+ *     alone must carry the meaning.
+ *   • Array order is the displayed sequence; <Timeline> emits a semantic <ol>,
+ *     so no entry encodes a step number or an ordinal.
  */
 
 import {

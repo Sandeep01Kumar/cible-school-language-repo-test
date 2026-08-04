@@ -10,10 +10,9 @@
  * pages can filter reliably (e.g. `courses.filter(c => c.category === 'Science')`).
  *
  * Each `eligibility` string states who a course suits (learner fit) and never
- * promises acceptance or an outcome. `CourseCard` surfaces it as visible card
- * metadata and `courseSchema()` serializes it as schema.org
- * `coursePrerequisites`, so every value must stay concise, truthful, and
- * defensible without a rating, credential, or review to justify it.
+ * promises acceptance or an outcome. `courseSchema()` serializes it as
+ * schema.org `coursePrerequisites`, so every value must stay concise, truthful,
+ * and defensible without a rating, credential, or review to justify it.
  *
  * NOTE: Durations, highlights, and curriculum details below are representative,
  * production-quality placeholders and MUST be confirmed with the institute before

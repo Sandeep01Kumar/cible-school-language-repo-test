@@ -30,9 +30,8 @@ import { cn } from '../../lib/cn.js'
  * Opt-in hover lift (`lift`, default OFF): raises the card 4px
  * (`hover:-translate-y-1`) and deepens it to the interactive elevation step
  * (`hover:shadow-lg` → --shadow-lg), both eased over the base `duration-200`.
- * This is the SINGLE home for that micro-interaction — the browsable marketing
- * cards (course, blog, event, faculty, feature) opt in with `<Card lift>`
- * instead of each re-declaring the same hover classes.
+ * This is the single home for that micro-interaction, so a browsable marketing
+ * card opts in with `<Card lift>` rather than re-declaring the hover classes.
  * - The lift swaps the base `transition-shadow` for the BARE `transition`
  *   utility because tailwind-merge keeps only the LAST `transition-*` class
  *   (they all share one conflict group). `transition` covers `translate` AND
@@ -44,10 +43,10 @@ import { cn } from '../../lib/cn.js'
  *   DURATION and never resets a transform, and Tailwind v4 renders
  *   `hover:-translate-y-1` via the `translate` property, so the opt-out must
  *   also match the `hover:` variant to win on selector specificity.
- * - Default OFF is deliberate. <ReviewCard> renders inside a Swiper carousel,
+ * - Default OFF is deliberate: <ReviewCard> renders inside a Swiper carousel,
  *   where a hover transform can jitter a slide mid-transition, and
  *   src/pages/Career.jsx and src/pages/Contact.jsx compose <Card> directly as
- *   static information panels. All three stay stationary — and keep the plain
+ *   static information panels. Those stay stationary — and keep the plain
  *   `hover:shadow-md` affordance — simply by not passing `lift`.
  *
  * Override contract: `className` is merged LAST via `cn(...)` (clsx +
@@ -66,9 +65,8 @@ import { cn } from '../../lib/cn.js'
  * @param {import('react').ElementType} [props.as='div'] Element/component to
  *   render as the card root (e.g. `'div'`, `'article'`, `'li'`).
  * @param {boolean} [props.lift=false] Opt in to the hover lift (4px raise plus
- *   `shadow-lg`) for browsable marketing cards. Leave it off for static
- *   information panels and for any card rendered inside a carousel. It is a
- *   purely visual affordance and adds no click semantics.
+ *   `shadow-lg`). Purely visual — it adds no click semantics — and it stays off
+ *   for static panels and for any card rendered inside a carousel.
  * @param {string} [props.className] Extra classes merged LAST (override the base).
  * @param {import('react').ReactNode} [props.children] Card content.
  * @param {object} [props] Any other props (`id`, `aria-*`, `onClick`, `style`,
