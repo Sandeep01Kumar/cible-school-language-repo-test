@@ -9,6 +9,12 @@
  * Each `category` is one of: 'English' | 'Science' | 'Computer' | 'Career', so
  * pages can filter reliably (e.g. `courses.filter(c => c.category === 'Science')`).
  *
+ * Each `eligibility` string states who a course suits (learner fit) and never
+ * promises acceptance or an outcome. `CourseCard` surfaces it as visible card
+ * metadata and `courseSchema()` serializes it as schema.org
+ * `coursePrerequisites`, so every value must stay concise, truthful, and
+ * defensible without a rating, credential, or review to justify it.
+ *
  * NOTE: Durations, highlights, and curriculum details below are representative,
  * production-quality placeholders and MUST be confirmed with the institute before
  * launch (see AAP §0.7.2). Titles, slugs, and categories are canonical and MUST NOT
@@ -28,6 +34,7 @@ export const courses = [
     summary:
       'Speak English with confidence in everyday situations. This beginner-friendly course builds real fluency, clear pronunciation, and the self-assurance to hold conversations at work, in college, and beyond.',
     duration: '3 Months',
+    eligibility: 'Learners building everyday spoken-English confidence',
     highlights: [
       'Daily guided conversation practice',
       'Pronunciation and accent training',
@@ -43,6 +50,7 @@ export const courses = [
     summary:
       'Master professional communication for the modern workplace. Sharpen your written and spoken English — from crafting clear emails to delivering confident presentations that get you noticed.',
     duration: '3 Months',
+    eligibility: 'Learners improving academic, social, or workplace communication',
     highlights: [
       'Business writing and email etiquette',
       'Presentation and meeting skills',
@@ -58,6 +66,7 @@ export const courses = [
     summary:
       'Grow into the confident, well-rounded person that colleges and employers remember. Develop the soft skills, body language, and etiquette that make a lasting first impression.',
     duration: '2 Months',
+    eligibility: 'Learners developing confidence, presentation, and interpersonal skills',
     highlights: [
       'Body language and positive posture',
       'Self-confidence and self-esteem building',
@@ -73,6 +82,7 @@ export const courses = [
     summary:
       'Command any stage with clarity and poise. Learn to structure powerful speeches, overcome stage fear, and shine in debates, anchoring, and group discussions.',
     duration: '45 Days',
+    eligibility: 'Learners seeking structured speaking and audience practice',
     highlights: [
       'Stage-fear management techniques',
       'Speech structuring and storytelling',
@@ -88,6 +98,7 @@ export const courses = [
     summary:
       'Walk into any interview ready to win the offer. Practice realistic HR and technical rounds, polish your resume, and master group discussions through personalized mock sessions.',
     duration: '45 Days',
+    eligibility: 'Students and job-seekers preparing for interviews',
     highlights: [
       'One-on-one mock interviews with feedback',
       'HR and technical round preparation',
@@ -103,6 +114,7 @@ export const courses = [
     summary:
       'Build a rock-solid foundation in Physics, Chemistry, and Mathematics for Class 11 and 12. Concept-first teaching and regular practice prepare you for board exams and competitive tests like JEE.',
     duration: '12 Months',
+    eligibility: 'Class 11–12 learners studying Physics, Chemistry, and Mathematics',
     highlights: [
       'Concept-focused Physics, Chemistry, and Maths',
       'Class 11 and 12 board syllabus coverage',
@@ -118,6 +130,7 @@ export const courses = [
     summary:
       'Pursue your medical dream with structured Physics, Chemistry, and Biology coaching for Class 11 and 12. Strengthen core concepts and exam temperament for board exams and NEET.',
     duration: '12 Months',
+    eligibility: 'Class 11–12 learners studying Physics, Chemistry, and Biology',
     highlights: [
       'In-depth Physics, Chemistry, and Biology',
       'Class 11 and 12 board syllabus coverage',
@@ -133,6 +146,7 @@ export const courses = [
     summary:
       'Get comfortable with computers from day one. Learn essential MS Office skills, typing, and internet basics that power everyday work, study, and job readiness.',
     duration: '3 Months',
+    eligibility: 'Beginners learning core computer and office skills',
     highlights: [
       'Computer fundamentals and operating systems',
       'MS Word, Excel, and PowerPoint',
@@ -148,6 +162,7 @@ export const courses = [
     summary:
       'Thrive in a digital-first world with practical, up-to-date skills. Learn safe online habits, digital payments, everyday productivity tools, and a smart introduction to AI.',
     duration: '2 Months',
+    eligibility: 'Beginners building safe, practical everyday digital skills',
     highlights: [
       'Online safety and privacy essentials',
       'Digital payments and e-governance services',
@@ -163,6 +178,7 @@ export const courses = [
     summary:
       'Discover the right path with expert, one-on-one career counseling. Assess your aptitude, choose the ideal stream, and build a clear, achievable roadmap toward your goals.',
     duration: '45 Days',
+    eligibility: 'Students and job-seekers exploring education and career options',
     highlights: [
       'Aptitude and interest assessment',
       'Stream and career selection guidance',

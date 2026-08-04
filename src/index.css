@@ -96,8 +96,14 @@
   --radius-2xl: 1.25rem;
 
   /* ===== Shadows (soft, low-opacity slate-tinted) ========================= */
+  /* Elevation roles, ascending: `shadow-sm` resting → `shadow-md` raised /
+     scrolled → `shadow-lg` interactive / fixed → `shadow-xl` drawer / highest
+     local surface. Declaring -lg/-xl here overrides Tailwind's generic (black-
+     tinted) defaults, so every step shares this slate-900 tint. */
   --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.06);
   --shadow-md: 0 8px 24px -6px rgb(15 23 42 / 0.12);
+  --shadow-lg: 0 12px 32px -8px rgb(15 23 42 / 0.16);
+  --shadow-xl: 0 24px 48px -12px rgb(15 23 42 / 0.20);
 }
 
 /**
@@ -159,9 +165,11 @@
  * Registered in Tailwind's `base` layer so utility classes always win.
  */
 @layer base {
-  /* Smooth in-page navigation (anchor jumps, scroll-to-top). */
+  /* Smooth in-page navigation (anchor jumps, scroll-to-top), offset so anchor
+     targets clear the sticky header in either motion mode. */
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: var(--header-height);
   }
 
   /* Document defaults: reset margin, full-height canvas, brand surface/text,
@@ -236,10 +244,16 @@
        • --safe-area-inset-bottom : the home-indicator/notch inset. Resolves to
          0px on hardware without a bottom inset (and until index.html opts in
          with `viewport-fit=cover` during final document wiring), so every
-         consumer degrades gracefully. */
+         consumer degrades gracefully.
+       • --header-height : the sticky navigation bar's height — the `h-16`/64px
+         bar that `src/components/layout/Navbar.jsx` renders inside Layout's
+         `sticky top-0 z-50` header. Consumed by `html { scroll-padding-top }`
+         so in-page scroll offsets stay in lock-step with the header instead of
+         hard-coding a magic number. */
   :root {
     --cta-sticky-height: 4rem;
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --header-height: 4rem;
   }
 
   /* Route-change / skip-link focus target. The `<main id="main">` landmark
