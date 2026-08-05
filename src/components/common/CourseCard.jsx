@@ -2,7 +2,7 @@ import Card from '../ui/Card.jsx'
 import Badge from '../ui/Badge.jsx'
 import Button from '../ui/Button.jsx'
 import { cn } from '../../lib/cn.js'
-import { FiClock } from 'react-icons/fi'
+import { FiClock, FiUserCheck } from 'react-icons/fi'
 import { FaCheck } from 'react-icons/fa'
 import courseEnglish from '../../assets/course-english.svg'
 import coursePersonality from '../../assets/course-personality.svg'
@@ -26,7 +26,14 @@ import courseCareer from '../../assets/course-career.svg'
  *   are exempt).
  * - Intentionally uses NO framer-motion so it is safe to mount inside grids, sliders
  *   and carousels; scroll-reveal is owned by the parent grid. The only motion here is
- *   a lightweight CSS `hover:-translate-y-1` lift.
+ *   <Card>'s opt-in `lift` prop (a 4px hover raise plus the `shadow-lg` interactive
+ *   elevation step), declared ONCE in the primitive instead of re-hardcoded per card.
+ *   <Card> cancels the raise for reduced-motion users with an explicit
+ *   `motion-reduce:transform-none` — the global reduced-motion reset in src/index.css
+ *   only clamps animation/transition DURATION and never resets a transform. This file
+ *   therefore passes NO `transition-*` utility of its own: they all share a single
+ *   tailwind-merge conflict group where the LAST class wins, so a local one would
+ *   silently discard <Card>'s transition and make the hover snap.
  *
  * Image resolution (course → one of 5 illustrations):
  * There are only 5 illustrations, and `category` alone is ambiguous because the
@@ -46,6 +53,17 @@ import courseCareer from '../../assets/course-career.svg'
  * produced by <Button to=...>, which renders a react-router <Link> — so this file
  * never imports Link directly.
  *
+ * Course metadata (Duration / Eligibility):
+ * Both facts render as a <dl> of labelled pairs with VISIBLE labels, so a visitor can
+ * see at a glance how long a course runs and who it suits without opening a page.
+ * Each row is guarded independently, so a sparse record never leaves an empty row.
+ * `eligibility` describes learner FIT only — never guaranteed acceptance or an
+ * outcome — and is the human-readable twin of `coursePrerequisites` in the Course
+ * JSON-LD (see `courseSchema()` in src/lib/schema.js). Both read the SAME
+ * `course.eligibility` field and this card prints it VERBATIM: never reword it, append
+ * a qualifier, or synthesize a value, so the visible text and the structured data
+ * cannot drift apart.
+ *
  * Accessibility (WCAG AA):
  * - The illustration is decorative (the title conveys the meaning), so it uses an
  *   empty `alt` + `aria-hidden`; every icon is likewise decorative (`aria-hidden`).
@@ -58,8 +76,9 @@ import courseCareer from '../../assets/course-career.svg'
  *
  * @param {object} props
  * @param {object} props.course The course record. Shape:
- *   `{ slug, title, category, summary, duration, highlights, icon }` where `category`
- *   is one of `'English' | 'Science' | 'Computer' | 'Career'`, `highlights` is an
+ *   `{ slug, title, category, summary, duration, eligibility, highlights, icon }` where
+ *   `category` is one of `'English' | 'Science' | 'Computer' | 'Career'`, `eligibility`
+ *   is a concise learner-fit string rendered verbatim (see above), `highlights` is an
  *   array of short strings, and `icon` is a react-icons component REFERENCE (rendered,
  *   never called). When `course` is falsy the component renders `null`.
  * @param {string} [props.to] Optional explicit destination that overrides the
@@ -134,10 +153,8 @@ export default function CourseCard({
   return (
     <Card
       as="article"
-      className={cn(
-        'flex h-full flex-col overflow-hidden p-0 transition-transform duration-200 hover:-translate-y-1',
-        className,
-      )}
+      lift
+      className={cn('flex h-full flex-col overflow-hidden p-0', className)}
       {...props}
     >
       {/* Media block: 4:3 illustration (matches the SVG viewBox) with a category
@@ -162,19 +179,48 @@ export default function CourseCard({
         ) : null}
       </div>
 
-      {/* Body: icon + title, duration, summary, up to three highlights, and the
-          admission-oriented CTA pinned to the bottom of the card. */}
+      {/* Body: icon + title, the labelled Duration / Eligibility metadata list,
+          summary, up to three highlights, and the admission-oriented CTA pinned to
+          the bottom of the card. */}
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div className="flex items-center gap-2">
           {Icon ? <Icon className="h-6 w-6 shrink-0 text-primary-600" aria-hidden="true" /> : null}
           <h3 className="text-lg font-semibold text-foreground">{course.title}</h3>
         </div>
 
-        {course.duration ? (
-          <p className="flex items-center gap-2 text-sm text-muted">
-            <FiClock aria-hidden="true" />
-            {course.duration}
-          </p>
+        {/* Metadata pairs. A <dl> is the semantic structure for label/value facts, so
+            assistive technology announces "Duration, 3 Months" instead of an
+            undifferentiated run of text. Each pair sits in a <div> so flex can lay the
+            label and value out on one line; a <div> child of a <dl> may contain only
+            <dt>/<dd>, so each decorative icon lives INSIDE its own <dt> (where it
+            visually belongs anyway) rather than as a third sibling. Each icon carries
+            `text-muted` explicitly — matching the highlight list below — because
+            `currentColor` would otherwise resolve against the <dt>'s stronger label
+            color and over-weight what is secondary metadata. The outer guard keeps a
+            record with neither fact from emitting an empty list — and from consuming a
+            slot in the body's `gap-4` rhythm. */}
+        {course.duration || course.eligibility ? (
+          <dl className="flex flex-col gap-2 text-sm text-muted">
+            {course.duration ? (
+              <div className="flex items-start gap-2">
+                <dt className="flex items-center gap-2 font-medium text-foreground">
+                  <FiClock className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                  Duration:
+                </dt>
+                <dd>{course.duration}</dd>
+              </div>
+            ) : null}
+
+            {course.eligibility ? (
+              <div className="flex items-start gap-2">
+                <dt className="flex items-center gap-2 font-medium text-foreground">
+                  <FiUserCheck className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                  Eligibility:
+                </dt>
+                <dd>{course.eligibility}</dd>
+              </div>
+            ) : null}
+          </dl>
         ) : null}
 
         {course.summary ? (

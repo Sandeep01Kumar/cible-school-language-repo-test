@@ -24,11 +24,22 @@ import { cn } from '../../lib/cn.js'
  *   text-center`. `h-full` lets every card in a grid row match the tallest
  *   sibling. `gap-4` (16px) spaces the avatar → name → role → bio → socials
  *   stack without per-child margins.
- * - Hover lift: `transition-transform duration-200 hover:-translate-y-1` — a
- *   4px rise on hover (motion only, never color) for a light micro-interaction
- *   that complements Card's own shadow deepening. It is neutralised for users
- *   who request reduced motion by the global `prefers-reduced-motion` rule in
- *   src/index.css, so no extra guard is needed here.
+ * - Hover lift: opted in via Card's `lift` prop instead of re-declared here, so
+ *   the 4px rise (motion only, never color) lives in one place for every
+ *   browsable marketing card. `lift` raises the card and deepens the hover
+ *   elevation a step past the base `hover:shadow-md` to the interactive
+ *   `hover:shadow-lg`, both eased over the same 200ms — so the rise now
+ *   complements the shadow SMOOTHLY rather than snapping it. This is why the
+ *   root `className` must carry NO `transition-*` utility: they all share one
+ *   tailwind-merge conflict group in which only the last wins, and since this
+ *   `className` merges LAST, declaring one here would silently drop Card's own
+ *   transition and leave the shadow change un-animated.
+ * - Reduced motion needs the explicit `motion-reduce:transform-none` (plus the
+ *   paired `motion-reduce:hover:translate-none`) that `lift` applies; the global
+ *   `prefers-reduced-motion` rule in src/index.css is NOT sufficient on its own,
+ *   because it only forces `scroll-behavior: auto` and clamps animation /
+ *   transition DURATION and never resets a transform — alone it would make the
+ *   rise instantaneous rather than remove it (WCAG 2.3.3).
  * - Avatar (`h-24 w-24 rounded-full`, 96px circle): when `member.image` is a
  *   truthy URL it renders a lazy-loaded, `object-cover` <img>. Otherwise it
  *   renders an INITIALS FALLBACK — the first letters of up to two name parts on
@@ -53,6 +64,14 @@ import { cn } from '../../lib/cn.js'
  *   its icon is `aria-hidden` (decorative), so screen readers announce the
  *   destination once, not the icon glyph. Links are real <a> elements and
  *   inherit the global `:focus-visible` ring (outlines are never removed).
+ * - That ring only PAINTS because the link is `inline-flex`. Its sole child is a
+ *   react-icons <svg>, which Tailwind's Preflight sets to `display: block`; on a
+ *   default `display: inline` anchor that block-in-inline split leaves the inline
+ *   fragments zero-area, so the outline has no geometry to draw and keyboard
+ *   users get NO visible focus (WCAG 2.4.7). Keep a display utility here.
+ *   `min-h-11 min-w-11` then holds the icon-only target at 44x44px and
+ *   `items-center justify-center` keeps the 20px glyph optically centred —
+ *   the same icon-control recipe as the Navbar hamburger and shared Button.
  * - Semantic list markup (`<ul>`/`<li>`) groups the social links, and the name
  *   is a proper <h3> heading for a logical document outline.
  *
@@ -96,13 +115,7 @@ function FacultyCard({ member, className, ...props }) {
   const { name, role, bio, image, socials } = member
 
   return (
-    <Card
-      className={cn(
-        'flex h-full flex-col items-center gap-4 text-center transition-transform duration-200 hover:-translate-y-1',
-        className,
-      )}
-      {...props}
-    >
+    <Card lift className={cn('flex h-full flex-col items-center gap-4 text-center', className)} {...props}>
       {image ? (
         <img
           src={image}
@@ -135,7 +148,7 @@ function FacultyCard({ member, className, ...props }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="text-muted transition-colors hover:text-primary-600"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted transition-colors hover:text-primary-600"
                 >
                   {Icon ? <Icon className="h-5 w-5" aria-hidden="true" /> : null}
                 </a>

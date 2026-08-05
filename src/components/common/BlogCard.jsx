@@ -40,8 +40,20 @@ import { FiCalendar, FiClock } from 'react-icons/fi'
  *     category label at WCAG-AA contrast across the whole banner.
  *
  * Motion: no framer-motion here — the parent grid owns scroll-reveal animation.
- * The card adds only a subtle `hover:-translate-y-1` lift, which the global
- * `prefers-reduced-motion` rule in index.css neutralises.
+ * The card's only micro-interaction is <Card>'s opt-in `lift` prop, passed as the
+ * bare `<Card ... lift>`: the primitive owns the 4px raise plus the `shadow-lg`
+ * interactive elevation step, so the hover classes are declared once there rather
+ * than re-spelled in this and four sibling cards. Reduced motion is handled by the
+ * explicit `motion-reduce:transform-none motion-reduce:hover:translate-none`
+ * opt-outs inside that `lift` — NOT by the global `prefers-reduced-motion` rule in
+ * index.css, which only forces `scroll-behavior: auto` and clamps
+ * animation/transition DURATION and so would leave the raise itself in place.
+ * (Tailwind v4 renders the raise through the `translate` CSS property rather than
+ * `transform`, so the `translate-none` half is the one that actually cancels it.)
+ * Consequently this caller must pass NO `transition-*` utility of its own:
+ * tailwind-merge keeps only the last class of that conflict group and `className`
+ * merges LAST, so one would silently cancel the primitive's own transition and
+ * make the hover snap instead of easing.
  *
  * @param {object} props
  * @param {object} props.post - The blog post. Shape:
@@ -77,10 +89,8 @@ function BlogCard({ post, className, ...props }) {
   return (
     <Card
       as="article"
-      className={cn(
-        'flex h-full flex-col overflow-hidden p-0 transition-transform duration-200 hover:-translate-y-1',
-        className,
-      )}
+      lift
+      className={cn('flex h-full flex-col overflow-hidden p-0', className)}
       {...props}
     >
       {/* Banner — 16/9 (aspect-video is Tailwind's named 16/9 utility, so no

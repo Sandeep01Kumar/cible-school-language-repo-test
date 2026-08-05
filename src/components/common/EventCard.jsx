@@ -16,8 +16,18 @@ import { FiClock, FiMapPin } from 'react-icons/fi'
  *
  * It is intentionally presentational (no data fetching, no local state, no
  * animation): the parent list is responsible for layout and any scroll-reveal
- * motion. Only a subtle `hover:-translate-y-1` lift is baked in as a
- * micro-interaction, which the shared base honours.
+ * motion. Its one micro-interaction is the shared hover lift, opted into with
+ * `<Card lift>` — a 4px raise plus the `shadow-lg` interactive elevation step —
+ * rather than re-declared here, so every browsable marketing card animates
+ * identically from a single source. This caller deliberately passes NO
+ * `transition-*` utility of its own: tailwind-merge collapses them all into one
+ * conflict group where only the LAST wins, so a transform-scoped transition
+ * merged after Card's classes would silently discard Card's shadow transition;
+ * `lift`'s bare `transition` eases the raise and the shadow together. Reduced
+ * motion is honoured by the explicit `motion-reduce:transform-none` inside
+ * Card's `lift`, NOT by the global reduced-motion reset in src/index.css — that
+ * reset only forces `scroll-behavior: auto` and clamps animation/transition
+ * DURATION, and never removes a transform.
  *
  * Composition (never forks a second Button/Card/Badge):
  * - Root surface        → `ui/Card` rendered `as="article"` (self-contained
@@ -120,10 +130,8 @@ export default function EventCard({ event, to, className, ...props }) {
   return (
     <Card
       as="article"
-      className={cn(
-        'flex h-full flex-col overflow-hidden p-0 transition-transform duration-200 hover:-translate-y-1',
-        className,
-      )}
+      lift
+      className={cn('flex h-full flex-col overflow-hidden p-0', className)}
       {...props}
     >
       {/* Banner — real image when supplied, brand-gradient fallback otherwise.

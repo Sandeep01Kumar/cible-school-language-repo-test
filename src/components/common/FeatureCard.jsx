@@ -14,8 +14,8 @@ import { cn } from '../../lib/cn.js'
  * Reuse-first: FeatureCard COMPOSES the shared <Card> surface primitive rather
  * than restyling a raw <div>, so it inherits the one brand surface used by every
  * card in the product (`rounded-2xl border border-border bg-white p-6 shadow-sm
- * hover:shadow-md`). FeatureCard adds only the feature-specific concerns: a
- * vertical layout, an icon badge, and a subtle hover lift.
+ * hover:shadow-md`). FeatureCard adds only the feature-specific concerns — a
+ * vertical layout and an icon badge — and opts into Card's shared hover `lift`.
  *
  * Data-agnostic: all content is supplied by the caller via props, so the same
  * component serves any feature list without duplication (the consuming page owns
@@ -24,14 +24,19 @@ import { cn } from '../../lib/cn.js'
  * Styling (Tailwind CSS v4 `@theme` tokens defined in src/index.css — zero
  * hardcoded values, 8px spacing scale):
  * - Root: inherits the Card surface and adds `flex flex-col gap-4` (16px vertical
- *   rhythm for the icon → title → text stack) plus `transition-transform
- *   duration-200 hover:-translate-y-1` — a subtle, GPU-cheap CSS hover lift. It is
- *   deliberately a PURE CSS micro-interaction (no framer-motion), so the card
- *   stays safe to render inside sliders/carousels and automatically honors
- *   `prefers-reduced-motion` via the global reduced-motion reset in index.css.
+ *   rhythm for the icon → title → text stack) plus <Card>'s opt-in `lift` — a 4px
+ *   hover raise deepening to `shadow-lg`, declared ONCE in Card and never
+ *   re-spelled here (so pass no `transition-*` from this caller; Card owns it).
+ *   It stays a PURE CSS micro-interaction (no framer-motion), so the tile is safe
+ *   inside sliders/carousels, and reduced motion is honored by the explicit
+ *   `motion-reduce:*` opt-out inside Card's `lift` — NOT by the global reduced-
+ *   motion reset in index.css, which only clamps DURATION, never a transform.
  * - Icon badge: a 48px (`h-12 w-12`), `rounded-xl` tinted disc — a translucent
- *   `bg-primary-600/10` fill with a `text-primary-600` glyph — rendered ONLY when
- *   an `icon` is provided (no empty badge otherwise).
+ *   `bg-primary-600/10` fill and a `text-primary-600` glyph, refined by a hairline
+ *   `inset-ring-1 inset-ring-primary-600/15` plus the resting `shadow-sm` token.
+ *   The INSET ring keeps the painted chip at exactly 48px and leaves the tinted
+ *   fill (so the glyph's contrast) unchanged — rendered ONLY when an `icon` is
+ *   provided (no empty badge otherwise).
  * - Title: an `<h3>` at `text-lg font-semibold text-foreground`.
  * - Description: a `<p>` at `text-sm leading-relaxed text-muted`.
  *
@@ -76,15 +81,9 @@ function FeatureCard({ icon, title, description, className, ...props }) {
   const Icon = icon
 
   return (
-    <Card
-      className={cn(
-        'flex flex-col gap-4 transition-transform duration-200 hover:-translate-y-1',
-        className,
-      )}
-      {...props}
-    >
+    <Card lift className={cn('flex flex-col gap-4', className)} {...props}>
       {Icon ? (
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600/10 text-primary-600">
+        <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600/10 text-primary-600 shadow-sm inset-ring-1 inset-ring-primary-600/15">
           <Icon className="h-6 w-6" aria-hidden="true" />
         </span>
       ) : null}
